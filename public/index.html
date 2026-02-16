@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор перековки</title>
+    <link rel="icon" href="/static/Ico/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/equipment_selector.css">
+    <link rel="stylesheet" href="/static/css/stone_selector.css">
+    <link rel="stylesheet" href="/static/css/talent_system.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Симулятор перековки</h1>
+        </div>
+        
+        <!-- Меню -->
+        <div class="menu-container">
+            <button class="menu-button">Меню</button>
+            <div class="menu-dropdown">
+                <div class="menu-section">Основное</div>
+                <a class="menu-item" data-modal="help">Справка</a>
+                <a class="menu-item" data-modal="about">О программе</a>
+                
+                <!-- РАЗДЕЛ - ДОПОЛНИТЕЛЬНОЕ -->
+                <div class="menu-section">Дополнительное</div>
+                <a class="menu-item" data-modal="donations">Пожертвования</a>
+                <!-- <a class="menu-item" data-modal="changelog">Список изменений</a> -->
+                
+                <div class="menu-section">Правовая информация</div>
+                <a class="menu-item" data-modal="legal">Юридические права</a>
+                <a class="menu-item" data-modal="licenses">Лицензии ПО</a>
+                <a class="menu-item" data-modal="game-assets">Лицензии игровых ресурсов</a>
+            </div>
+        </div>
+
+        <!-- Модальное окно Справка -->
+        <div class="modal" id="help-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Справка</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>Как пользоваться симулятором перековки</h3>
+                    <p>Этот инструмент поможет вам рассчитать оптимальные характеристики для вашего персонажа.</p>
+                    
+                    <h3>Основные функции:</h3>
+                    <ul>
+                        <li><strong>Выбор класса:</strong> Нажмите на иконку класса в левой панели</li>
+                        <li><strong>Экипировка:</strong> Кликните на слот экипировки для выбора предмета</li>
+                        <li><strong>Статистики:</strong> Просматривайте атакующие и оборонительные характеристики</li>
+                        <li><strong>Эликсиры:</strong> Выбирайте баффы от эликсиров</li>
+                        <li><strong>Таланты:</strong> Настройте ветки талантов </li>
+                    </ul>
+                    
+                    <h3>Советы:</h3>
+                    <ul>
+                        <li>Все изменения применяются автоматически</li>
+                        <li>Статистики пересчитываются в реальном времени</li>
+                        <li>Используйте разные комбинации для поиска оптимального билда</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно О программе -->
+        <div class="modal" id="about-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">О программе</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>Симулятор перековки</h3>
+                    <p><strong>Версия:</strong> 1.0.0</p>
+                    <p><strong>Разработчик:</strong> Кразас</p>
+                    <p><strong>Дата сборки:</strong> 10.02.2026</p>
+                    
+                    <h3>Описание</h3>
+                    <p>Данный симулятор создан для помощи игрокам в оптимизации характеристик персонажей. 
+                    Инструмент позволяет тестировать различные комбинации экипировки, талантов и баффов.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно Пожертвования -->
+        <div class="modal" id="donations-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Поддержка проекта</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>Поддержите развитие симулятора</h3>
+                    <p>Если вам нравится наш симулятор и вы хотите поддержать его дальнейшее развитие</p>
+                    
+                    <h3>Способы поддержки:</h3>
+                    <ul>
+                        <li><strong>Сбер:</strong> 2202 2050 4817 1133 </li>
+                        <li><strong>ЮMoney:</strong> 4100 1194 0630 9686 </li>
+                    </ul>
+                    
+                    <h3>На что пойдут средства:</h3>
+                    <ul>
+                        <li>Разработка новых функций</li>
+                        <li>Обновление базы предметов</li>
+                        <li>Улучшение интерфейса</li>
+                    </ul>
+                    
+                    <p><em>Спасибо за вашу поддержку!</em></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Левая панель - классы и таланты -->
+            <div class="left-panel">
+                <div class="classes-section">
+                    <h2>Классы</h2>
+                    <div class="class-buttons">
+                        <button class="class-btn active" data-class="warrior">
+                            <img src="/static/Ico/Classes/Small/War_Icn_small.svg" alt="Воин" class="class-icon">
+                            Воин
+                        </button>
+                        <button class="class-btn" data-class="rogue">
+                            <img src="/static/Ico/Classes/Small/Thief_Icn_small.svg" alt="Разбойник" class="class-icon">
+                            Разбойник
+                        </button>
+                        <button class="class-btn" data-class="priest">
+                            <img src="/static/Ico/Classes/Small/Priest_Icn_small.svg" alt="Жрец" class="class-icon">
+                            Жрец
+                        </button>
+                        <button class="class-btn" data-class="archer">
+                            <img src="/static/Ico/Classes/Small/Ranger_Icn_small.svg" alt="Лучник" class="class-icon">
+                            Лучник
+                        </button>
+                        <button class="class-btn" data-class="mage">
+                            <img src="/static/Ico/Classes/Small/Mag_Icn_small.svg" alt="Маг" class="class-icon">
+                            Маг
+                        </button>
+                    </div>
+                </div>
+                <button class="reset-btn" data-class="reset">
+                    Сбросить
+                </button>
+            </div>
+            
+            <!-- Центральная панель - экипировка -->
+            <div class="center-panel">
+                <h2>Экипировка</h2>
+                <div class="equipment-grid">
+                    <!-- Столбец 1: Голова, Плечи, Роба, Кольцо 1 -->
+                    <div class="equipment-column">
+                        <div class="equipment-slot" data-slot="helm">
+                            <img src="/static/Ico/Button_Char/01_Helm.svg" alt="Шлем">
+                            <span>Голова</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="shoulders">
+                            <img src="/static/Ico/Button_Char/02_shoulders.svg" alt="Наплечники">
+                            <span>Плечи</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="chest">
+                            <img src="/static/Ico/Button_Char/04_Chest.svg" alt="Роба">
+                            <span>Роба</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="ring1">
+                            <img src="/static/Ico/Button_Char/08_Ring1.svg" alt="Кольцо">
+                            <span>Кольцо 1</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Столбец 2: Амулет 1, Ожерелье, Штаны, Оружие -->
+                    <div class="equipment-column">
+                        <div class="equipment-slot" data-slot="trinket1">
+                            <img src="/static/Ico/Button_Char/06_Trinket1.svg" alt="Амулет">
+                            <span>Амулет 1</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="neck">
+                            <img src="/static/Ico/Button_Char/09_Neck.svg" alt="Ожерелье">
+                            <span>Ожерелье</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="pants">
+                            <img src="/static/Ico/Button_Char/16_Pants.svg" alt="Штаны">
+                            <span>Штаны</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="rhand">
+                            <img src="/static/Ico/Button_Char/07_Rhand.svg" alt="Оружие">
+                            <span>Оружие</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Столбец 3: Амулет 2, Перчатки, Сапоги, Щит -->
+                    <div class="equipment-column">
+                        <div class="equipment-slot" data-slot="trinket2">
+                            <img src="/static/Ico/Button_Char/18_Trinket2.svg" alt="Амулет">
+                            <span>Амулет 2</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="hands">
+                            <img src="/static/Ico/Button_Char/14_Hands.svg" alt="Перчатки">
+                            <span>Перчатки</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="boots">
+                            <img src="/static/Ico/Button_Char/17_Boots.svg" alt="Сапоги">
+                            <span>Сапоги</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="lhand">
+                            <img src="/static/Ico/Button_Char/11_Lhand.svg" alt="Щит">
+                            <span>Щит</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Столбец 4: Плащ, Наручи, Пояс, Кольцо 2 -->
+                    <div class="equipment-column">
+                        <div class="equipment-slot" data-slot="cape">
+                            <img src="/static/Ico/Button_Char/03_Cape.svg" alt="Плащ">
+                            <span>Плащ</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="bracers">
+                            <img src="/static/Ico/Button_Char/13_Bracers.svg" alt="Наручи">
+                            <span>Наручи</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="belt">
+                            <img src="/static/Ico/Button_Char/15_Belt.svg" alt="Пояс">
+                            <span>Пояс</span>
+                        </div>
+                        <div class="equipment-slot" data-slot="ring2">
+                            <img src="/static/Ico/Button_Char/12_Ring2.svg" alt="Кольцо">
+                            <span>Кольцо 2</span>
+                        </div>
+                    </div>
+                </div>
+                            
+                <div class="talents-section">
+                    <h2>Таланты</h2>
+                </div>
+            </div>
+            
+            <!-- Правая панель - статистики и эликсиры -->
+            <div class="right-panel">
+                <h2>Статистики</h2>
+                <div class="stats-tabs">
+                    <div class="stats-tab-buttons">
+                        <button class="stats-tab-btn active" data-tab="offensive">Атакующие</button>
+                        <button class="stats-tab-btn" data-tab="defensive">Оборонительные</button>
+                    </div>
+                    
+                    <div class="stats-tab-content">
+                        <!-- Атакующие статистики -->
+                        <div class="stats-tab-pane active" id="offensive-tab">
+                            <div class="stats-category">
+                                <div class="stat-row">
+                                    <label>Сила атаки:</label>
+                                    <span id="attack_power">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Скорость атаки:</label>
+                                    <span id="attack_speed">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Точность:</label>
+                                    <span id="hit">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Шанс крит. урона:</label>
+                                    <span id="crit">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Физическая броня:</label>
+                                    <span id="armour">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Магическая броня:</label>
+                                    <span id="spell_armour">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Сопр. маг:</label>
+                                    <span id="resist">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Сопр. крит. урону:</label>
+                                    <span id="crit_damage_resistance">0</span>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+                        <!-- Оборонительные статистики -->
+                        <div class="stats-tab-pane" id="defensive-tab">
+                            <div class="stats-category">
+                                <div class="stat-row">
+                                    <label>Уклонение:</label>
+                                    <span id="dodge">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Блок:</label>
+                                    <span id="block">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Парирование:</label>
+                                    <span id="parry">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Скорость движения:</label>
+                                    <span id="speed">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Здоровье:</label>
+                                    <span id="hp">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Восстановления здоровья:</label>
+                                    <span id="hp_reg">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Энергия:</label>
+                                    <span id="mp">0</span>
+                                </div>
+                                <div class="stat-row">
+                                    <label>Восстановления энергии:</label>
+                                    <span id="mp_reg">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Новая секция Эликсиры -->
+                <h2 style="margin-top: 20px;">Эликсиры</h2>
+                <div class="elixirs-tabs">
+                    <div class="elixirs-tab-buttons">
+                        <button class="elixirs-tab-btn active" data-tab="offensive-elixirs">Атакующие</button>
+                        <button class="elixirs-tab-btn" data-tab="defensive-elixirs">Защитные</button>
+                    </div>
+                    
+                    <div class="elixirs-tab-content">
+                        <!-- Атакующие эликсиры -->
+                        <div class="elixirs-tab-pane active" id="offensive-elixirs-tab">
+                            <div class="elixirs-options">
+                                <label for="offensive-none">
+                                    <input type="radio" id="offensive-none" name="offensive-elixir" value="none" checked> Без банок
+                                </label>
+                                <label for="offensive-battle10">
+                                    <input type="radio" id="offensive-battle10" name="offensive-elixir" value="battle10"> Битва 10%
+                                </label>
+                                <label for="offensive-battle15">
+                                    <input type="radio" id="offensive-battle15" name="offensive-elixir" value="battle15"> Битва 15%
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Защитные эликсиры -->
+                        <div class="elixirs-tab-pane" id="defensive-elixirs-tab">
+                            <div class="elixirs-options">
+                                <label for="defensive-none">
+                                    <input type="radio" id="defensive-none" name="defensive-elixir" value="none" checked> Без банок
+                                </label>
+                                <label for="defensive-agility10">
+                                    <input type="radio" id="defensive-agility10" name="defensive-elixir" value="agility10"> Ловкость 10%
+                                </label>
+                                <label for="defensive-agility15">
+                                    <input type="radio" id="defensive-agility15" name="defensive-elixir" value="agility15"> Ловкость 15%
+                                </label>
+                                <label for="defensive-health10">
+                                    <input type="radio" id="defensive-health10" name="defensive-elixir" value="health10"> Здоровье 10%
+                                </label>
+                                <label for="defensive-health15">
+                                    <input type="radio" id="defensive-health15" name="defensive-elixir" value="health15"> Здоровье 15%
+                                </label>
+                                <label for="defensive-defense10">
+                                    <input type="radio" id="defensive-defense10" name="defensive-elixir" value="defense10"> Оборонка 10%
+                                </label>
+                                <label for="defensive-defense15">
+                                    <input type="radio" id="defensive-defense15" name="defensive-elixir" value="defense15"> Оборонка 15%
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="other-section">
+                    <h2>Другое</h2>
+                    <div class="other-options">
+                        <!-- Секция гильдейского баффа -->
+                        <div class="guild-buff-section">
+                            <div class="guild-buff-option">
+                                <label for="guild-buff" class="guild-buff-label">
+                                    <input type="checkbox" id="guild-buff"> 
+                                    <span class="guild-buff-text">Гильдейский бафф</span>
+                                </label>
+                            </div>
+                            <div class="guild-buff-description">
+                                Увеличивает все характеристики на 3%, здоровье на 5% и сопротивление критическому урону на 5%
+                            </div>
+                        </div>
+
+                        <!-- Новая секция талантов -->
+                        <div class="guild-buff-section">
+                            <div class="guild-buff-option">
+                                <label for="talent-buff" class="guild-buff-label">
+                                    <input type="checkbox" id="talent-buff"> 
+                                    <span class="guild-buff-text">Талантовые ауры</span>
+                                </label>
+                            </div>
+                            <div class="guild-buff-description">
+                                Учитываются ауры от выбраного класса 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script src="/static/js/local_storage_manager.js"></script> -->
+    <script src="/static/js/logging_manager.js"></script>
+    <script src="/static/js/character_stats.js"></script>
+    <script src="/static/js/priest_weapon_bonuses.js"></script>
+    <script src="/static/js/stone_calculator.js"></script>
+    <script src="/static/js/rune_calculator.js"></script>
+    <script src="/static/js/elixir_calculator.js"></script>
+    <script src="/static/js/talent_calculator.js"></script>
+    <script src="/static/js/stat_calculator.js"></script>
+    <script src="/static/js/armor_calculator.js"></script>
+    <script src="/static/js/equipment_selector.js"></script>
+    <script src="/static/js/equipment_tooltips.js"></script>
+    <script src="/static/js/talent_system.js"></script>
+    <script src="/static/js/menu.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

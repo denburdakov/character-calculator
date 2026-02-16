@@ -1,0 +1,232 @@
+/* stone_selector.css - исправленный */
+/* ===== СЕТКА КАМНЕЙ ===== */
+.stones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.stone-option {
+    padding: 25px 15px;
+    border: 3px solid var(--border);
+    border-radius: 15px;
+    cursor: pointer;
+    text-align: center;
+    background: white;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stone-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: var(--transition);
+}
+
+.stone-option:hover {
+    border-color: var(--primary);
+    background: var(--lighter);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow);
+}
+
+.stone-option:hover::before {
+    transform: scaleX(1);
+}
+
+.stone-option.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px var(--shadow);
+}
+
+.stone-option.selected::before {
+    transform: scaleX(1);
+    background: var(--gradient-secondary);
+}
+
+/* ===== ВЫБРАННЫЕ КАМНИ ===== */
+#selected-stones {
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    border: 2px solid var(--border);
+}
+
+#stones-list {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stone-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin: 2px;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.3);
+}
+
+.stone-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+.stone-tag::before {
+    content: '💎';
+    margin-right: 8px;
+    font-size: 0.9em;
+}
+
+/* Для оружия с большим количеством камней */
+.many-stones #stones-list {
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 8px;
+}
+
+/* ===== СЕЛЕКТОР УРОВНЯ КАМНЕЙ ===== */
+.stone-level-selector {
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    border: 2px solid var(--border);
+}
+
+.stone-levels {
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stone-level-option {
+    padding: 12px 20px;
+    border: 3px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    background: white;
+    font-weight: 600;
+    transition: var(--transition);
+    min-width: 80px;
+    text-align: center;
+}
+
+.stone-level-option:hover {
+    border-color: var(--primary);
+    background: var(--lighter);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.stone-level-option.selected {
+    border-color: var(--primary);
+    background: var(--gradient-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+/* Значения камней */
+.stone-values {
+    font-weight: bold;
+    color: var(--dark);
+    margin-top: 8px;
+    font-size: 1.1em;
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+}
+
+.stone-values.percent {
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+/* Подсветка оружейных камней */
+.stone-option.weapon-stone {
+    border: 3px solid var(--warning);
+    background: linear-gradient(135deg, #fff3e0, #ffecb3);
+}
+
+.stone-option.weapon-stone:hover {
+    border-color: var(--warning-dark);
+    background: linear-gradient(135deg, #ffecb3, #ffe082);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(255,152,0,0.3);
+}
+
+.stone-option.weapon-stone.selected {
+    border-color: var(--warning-dark);
+    background: linear-gradient(135deg, #ffb74d, #ff9800);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255,152,0,0.4);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .stones-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .stone-option {
+        padding: 20px 10px;
+        font-size: 0.9em;
+    }
+    
+    .stone-levels {
+        gap: 8px;
+    }
+    
+    .stone-level-option {
+        padding: 10px 15px;
+        min-width: 70px;
+        font-size: 0.9em;
+    }
+    
+    #selected-stones,
+    .stone-level-selector {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stones-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stone-levels {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stone-level-option {
+        width: 100%;
+        max-width: 200px;
+    }
+}

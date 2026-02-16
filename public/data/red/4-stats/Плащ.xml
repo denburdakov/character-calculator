@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<equipment_list>
+    <equipment name="Атаки" class="warrior,priest,rogue,archer,mage">
+        <stat name="Броня">8437</stat>
+        <stat name="Здоровье">3925</stat>
+        <stat name="Сопр. Крит. Урону">1570</stat>
+        <stat name="Восст. Здоровья">1368</stat>
+    </equipment>
+    <equipment name="Быстроты" class="warrior,priest,rogue,archer,mage">
+        <stat name="Здоровье">3925</stat>
+        <stat name="Скорость атаки">1570</stat>
+        <stat name="Точность">785</stat>
+        <stat name="Восст. Энергии">479</stat>
+    </equipment>
+    <equipment name="Быстроты" class="warrior,priest,rogue,archer,mage">
+        <stat name="Энергия">2355</stat>
+        <stat name="Скорость атаки">1189</stat>
+        <stat name="Точность">1570</stat>
+        <stat name="Уклонение">2040</stat>
+    </equipment>
+    <equipment name="Жесткости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Маг. Броня">8437</stat>
+        <stat name="Энергия">3572</stat>
+        <stat name="Сила атаки">1410</stat>
+        <stat name="Крит. Урон">785</stat>
+    </equipment>
+    <equipment name="Жесткости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Броня">8437</stat>
+        <stat name="Сила атаки">1410</stat>
+        <stat name="Крит. Урон">1189</stat>
+        <stat name="Парирование">2040</stat>
+    </equipment>
+    <equipment name="Изворотливости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Здоровье">3925</stat>
+        <stat name="Точность">785</stat>
+        <stat name="Уклонение">4080</stat>
+        <stat name="Парирование">3097</stat>
+    </equipment>
+    <equipment name="Контратаки" class="warrior,priest">
+        <stat name="Маг. Броня">8437</stat>
+        <stat name="Точность">785</stat>
+        <stat name="Блок">1189</stat>
+        <stat name="Восст. Здоровья">1800</stat>
+    </equipment>
+    <equipment name="Мастерства" class="warrior,priest">
+        <stat name="Скорость атаки">785</stat>
+        <stat name="Блок">1189</stat>
+        <stat name="Уклонение">2040</stat>
+        <stat name="Парирование">4080</stat>
+    </equipment>
+    <equipment name="Неистовства" class="warrior,priest,rogue,archer,mage">
+        <stat name="Энергия">2355</stat>
+        <stat name="Сила атаки">1072</stat>
+        <stat name="Скорость атаки">1570</stat>
+        <stat name="Крит. Урон">785</stat>
+    </equipment>
+    <equipment name="Ненависти" class="warrior,priest,rogue,archer,mage">
+        <stat name="Сила атаки">705</stat>
+        <stat name="Точность">785</stat>
+        <stat name="Крит. Урон">1570</stat>
+        <stat name="Парирование">3097</stat>
+    </equipment>
+    <equipment name="Несгибаемости" class="warrior,priest">
+        <stat name="Сопр. Магии">3097</stat>
+        <stat name="Блок">1570</stat>
+        <stat name="Уклонение">2040</stat>
+        <stat name="Восст. Энергии">315</stat>
+    </equipment>
+    <equipment name="Парирования" class="warrior,priest">
+        <stat name="Броня">8437</stat>
+        <stat name="Сопр. Крит. Урону">1189</stat>
+        <stat name="Блок">785</stat>
+        <stat name="Восст. Энергии">630</stat>
+    </equipment>
+    <equipment name="Свирепости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Скорость атаки">785</stat>
+        <stat name="Крит. Урон">1570</stat>
+        <stat name="Уклонение">2040</stat>
+        <stat name="Парирование">3097</stat>
+    </equipment>
+    <equipment name="Сопротивления" class="warrior,priest,rogue,archer,mage">
+        <stat name="Маг. Броня">8437</stat>
+        <stat name="Энергия">4709</stat>
+        <stat name="Сопр. Магии">2040</stat>
+        <stat name="Восст. Энергии">479</stat>
+    </equipment>
+    <equipment name="Сопротивления" class="warrior,priest">
+        <stat name="Здоровье">3925</stat>
+        <stat name="Сопр. Магии">3097</stat>
+        <stat name="Точность">785</stat>
+        <stat name="Блок">1570</stat>
+    </equipment>
+    <equipment name="Сопротивления" class="warrior,priest,rogue,archer,mage">
+        <stat name="Маг. Броня">8437</stat>
+        <stat name="Сопр. Магии">4080</stat>
+        <stat name="Уклонение">2040</stat>
+        <stat name="Восст. Здоровья">1368</stat>
+    </equipment>
+    <equipment name="Стойкости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Маг. Броня">16878</stat>
+        <stat name="Здоровье">5955</stat>
+        <stat name="Уклонение">2040</stat>
+        <stat name="Восст. Здоровья">898</stat>
+    </equipment>
+    <equipment name="Стремительности" class="warrior,priest,rogue,archer,mage">
+        <stat name="Здоровье">7844</stat>
+        <stat name="Энергия">3572</stat>
+        <stat name="Крит. Урон">785</stat>
+        <stat name="Восст. Энергии">315</stat>
+    </equipment>
+    <equipment name="Твердости" class="warrior,priest">
+        <stat name="Здоровье">7844</stat>
+        <stat name="Сопр. Магии">2040</stat>
+        <stat name="Сопр. Крит. Урону">1189</stat>
+        <stat name="Блок">785</stat>
+    </equipment>
+    <equipment name="Уверенности" class="warrior,priest,rogue,archer,mage">
+        <stat name="Броня">16878</stat>
+        <stat name="Энергия">2355</stat>
+        <stat name="Сопр. Крит. Урону">1189</stat>
+        <stat name="Крит. Урон">785</stat>
+    </equipment>
+    <equipment name="Удара" class="warrior,priest,rogue,archer,mage">
+        <stat name="Скорость атаки">785</stat>
+        <stat name="Точность">1570</stat>
+        <stat name="Крит. Урон">785</stat>
+        <stat name="Уклонение">3097</stat>
+    </equipment>
+    <equipment name="Устойчивости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Броня">16878</stat>
+        <stat name="Маг. Броня">12812</stat>
+        <stat name="Здоровье">3925</stat>
+        <stat name="Сопр. Крит. Урону">404</stat>
+    </equipment>
+    <equipment name="Устойчивости" class="warrior,priest,rogue,archer,mage">
+        <stat name="Броня">12812</stat>
+        <stat name="Сопр. Магии">2040</stat>
+        <stat name="Скорость атаки">785</stat>
+        <stat name="Сопр. Крит. Урону">1570</stat>
+    </equipment>
+    <equipment name="Фехтования" class="warrior,priest,rogue,archer,mage">
+        <stat name="Маг. Броня">16878</stat>
+        <stat name="Энергия">2355</stat>
+        <stat name="Сила атаки">1072</stat>
+        <stat name="Уклонение">2040</stat>
+    </equipment>
+</equipment_list>

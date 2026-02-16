@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Калькулятор персонажа</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Регистрация</h1>
+            
+            <div id="message" class="alert" style="display: none;"></div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" name="username" required>
+                    <small id="username-availability"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email (необязательно)</label>
+                    <input type="email" id="email" name="email">
+                    <small id="email-availability"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Подтверждение пароля</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <small id="password-match"></small>
+                </div>
+                
+                <div class="license-section">
+                    <div class="license-checkbox">
+                        <input type="checkbox" id="tos_accept" name="tos_accept" required>
+                        <label for="tos_accept">
+                            Я согласен с <a href="#" onclick="showTosModal()">Условиями использования</a>
+                        </label>
+                    </div>
+                    
+                    <div class="license-checkbox">
+                        <input type="checkbox" id="license_accept" name="license_accept" required>
+                        <label for="license_accept">
+                            Я принимаю <a href="#" onclick="showLicenseModal()">Лицензионное соглашение</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="submitBtn" disabled>Зарегистрироваться</button>
+            </form>
+            
+            <div class="auth-links">
+                <a href="/login.html">Уже есть аккаунт? Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="license-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Лицензионное соглашение</h2>
+                <span class="close" onclick="document.getElementById('license-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Текст лицензионного соглашения...</p>
+                <button onclick="acceptLicense()" class="btn-accept">Принять</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tos-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Условия использования</h2>
+                <span class="close" onclick="document.getElementById('tos-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Текст условий использования...</p>
+                <button onclick="acceptTos()" class="btn-accept">Принять</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функции для модальных окон
+        function showLicenseModal() {
+            document.getElementById('license-modal').style.display = 'block';
+        }
+
+        function showTosModal() {
+            document.getElementById('tos-modal').style.display = 'block';
+        }
+
+        function acceptLicense() {
+            document.getElementById('license_accept').checked = true;
+            document.getElementById('license-modal').style.display = 'none';
+            validateForm();
+        }
+
+        function acceptTos() {
+            document.getElementById('tos_accept').checked = true;
+            document.getElementById('tos-modal').style.display = 'none';
+            validateForm();
+        }
+
+        // Закрытие модальных окон
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+
+        // Проверка совпадения паролей
+        document.getElementById('confirm_password')?.addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            const matchElement = document.getElementById('password-match');
+            
+            if (confirmPassword) {
+                if (password === confirmPassword) {
+                    matchElement.textContent = 'Пароли совпадают';
+                    matchElement.className = 'available';
+                } else {
+                    matchElement.textContent = 'Пароли не совпадают';
+                    matchElement.className = 'taken';
+                }
+            }
+            validateForm();
+        });
+
+        // Проверка доступности имени пользователя
+        document.getElementById('username')?.addEventListener('blur', async function() {
+            const username = this.value;
+            const availabilityElement = document.getElementById('username-availability');
+            
+            if (username.length >= 3) {
+                try {
+                    const response = await fetch(`/api/check_username?username=${encodeURIComponent(username)}`);
+                    const data = await response.json();
+                    
+                    if (data.available) {
+                        availabilityElement.textContent = 'Имя пользователя доступно';
+                        availabilityElement.className = 'available';
+                    } else {
+                        availabilityElement.textContent = 'Имя пользователя занято';
+                        availabilityElement.className = 'taken';
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки имени:', error);
+                }
+            }
+            validateForm();
+        });
+
+        // Проверка доступности email
+        document.getElementById('email')?.addEventListener('blur', async function() {
+            const email = this.value;
+            const availabilityElement = document.getElementById('email-availability');
+            
+            if (email.includes('@')) {
+                try {
+                    const response = await fetch(`/api/check_email?email=${encodeURIComponent(email)}`);
+                    const data = await response.json();
+                    
+                    if (data.available) {
+                        availabilityElement.textContent = 'Email доступен';
+                        availabilityElement.className = 'available';
+                    } else {
+                        availabilityElement.textContent = 'Email уже используется';
+                        availabilityElement.className = 'taken';
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки email:', error);
+                }
+            }
+            validateForm();
+        });
+
+        // Валидация формы
+        function validateForm() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const tosAccepted = document.getElementById('tos_accept').checked;
+            const licenseAccepted = document.getElementById('license_accept').checked;
+            
+            const isValid = username.length >= 3 && 
+                          password.length >= 6 && 
+                          password === confirmPassword && 
+                          tosAccepted && 
+                          licenseAccepted;
+            
+            document.getElementById('submitBtn').disabled = !isValid;
+            return isValid;
+        }
+
+        // Обновляем валидацию при изменении полей
+        ['username', 'password', 'tos_accept', 'license_accept'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', validateForm);
+            document.getElementById(id)?.addEventListener('input', validateForm);
+        });
+
+        // Отправка формы
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = 'Пожалуйста, заполните все поля правильно';
+                messageEl.className = 'alert alert-error';
+                messageEl.style.display = 'block';
+                return;
+            }
+            
+            const formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value || '',
+                password: document.getElementById('password').value
+            };
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = data.message || data.error;
+                messageEl.className = 'alert ' + (data.success ? 'alert-success' : 'alert-error');
+                messageEl.style.display = 'block';
+                
+                if (data.success) {
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = 'Ошибка подключения к серверу';
+                messageEl.className = 'alert alert-error';
+                messageEl.style.display = 'block';
+            }
+        });
+
+        // Проверяем, если уже авторизован
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/check');
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.log('Не авторизован');
+            }
+        }
+        
+        checkAuth();
+    </script>
+</body>
+</html>
