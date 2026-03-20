@@ -163,6 +163,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    if (typeof addRemoveButtonsToEquipmentSlots === 'function') {
+        setTimeout(addRemoveButtonsToEquipmentSlots, 500);
+    }
+
     // Экспорт функций в глобальную область
     window.updateLeftHandState = updateLeftHandState;
     window.updateAllEquipmentSlots = updateAllEquipmentSlots;

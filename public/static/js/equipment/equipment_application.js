@@ -9,16 +9,25 @@ function applyEquipmentSelection(slotType, equipmentType) {
 
     const selectedIndex = window.selectedStats[0];
     const selectedEquip = window.currentEquipmentData[selectedIndex];
+
+    window.currentSlotType = slotType;
     
     const equipmentStats = convertEquipmentStatsToCalculatorFormat(window.currentEquipmentData, selectedIndex);
     
+    // ВАЖНО: Формируем объект камней для передачи
+    const stonesForSlot = (window.selectedStones || []).map(stone => ({
+        id: stone.id,
+        level: stone.level
+        // Не нужно передавать name и isPercentage, они не используются в калькуляторе
+    }));
+
     const equipmentData = {
         slot: slotType,
         type: selectedEquip.type,
         stats: equipmentStats,
         equipmentType: equipmentType,
         runeLevel: window.selectedRuneLevel || 0,
-        stones: window.selectedStones || [],
+        stones: stonesForSlot,            // <-- ПЕРЕДАЕМ МАССИВ КАМНЕЙ
         quality: window.selectedQuality,
         weaponType: window.selectedWeaponType,
         leftHandType: window.selectedLeftHandType
@@ -27,24 +36,25 @@ function applyEquipmentSelection(slotType, equipmentType) {
     if (!window.equipmentData) {
         window.equipmentData = {};
     }
+    
+    // Сохраняем данные экипировки
     window.equipmentData[slotType] = equipmentData;
 
+    // Обработка двуручного оружия
     if (slotType === 'rhand' && window.selectedWeaponType === 'two-handed') {
         removeLeftHandEquipment();
     }
 
     window.updateLeftHandState();
 
+    // Обновление калькулятора статистики
     if (window.statCalculator) {
-        delete window.statCalculator.equipmentStats[slotType];
-        window.statCalculator.addEquipmentStats(slotType, equipmentStats);
-        window.statCalculator.setRuneLevel(slotType, window.selectedRuneLevel || 0);
+        window.statCalculator.setEquipment(slotType, equipmentData); // <-- ТЕПЕРЬ ЗДЕСЬ ЕСТЬ ДАННЫЕ О КАМНЯХ
         
-        if (window.selectedStones && window.selectedStones.length > 0) {
-            window.statCalculator.addStones(slotType, window.selectedStones);
+        // Обновляем отображение статистик
+        if (typeof window.updateStatsDisplay === 'function') {
+            window.updateStatsDisplay();
         }
-        
-        window.statCalculator.updateStats();
     }
 
     updateEquipmentSlotDisplay(slotType, equipmentData);
@@ -56,6 +66,40 @@ function applyEquipmentSelection(slotType, equipmentType) {
     }, 100);
 
     window.resetSelectionState();
+}
+
+function convertEquipmentStatsToCalculatorFormat(equipmentData, selectedIndex) {
+    const selectedEquip = equipmentData[selectedIndex];
+    const stats = {};
+    
+    // Добавляем бонусные статы из XML
+    if (selectedEquip.stats && Array.isArray(selectedEquip.stats)) {
+        selectedEquip.stats.forEach(statString => {
+            // ИСПРАВЛЕНО: Улучшенное регулярное выражение для разных форматов
+            const match = statString.match(/^(.+?)\s*[:+]\s*(\d+)$/);
+            if (match) {
+                const statName = match[1].trim();
+                const statValue = parseInt(match[2], 10);
+                
+                // ИСПРАВЛЕНО: Добавляем отладку
+                console.log(`📊 Парсинг стата: "${statName}" = ${statValue}`);
+                
+                const mappedStat = EquipmentConfig.statMapping[statName];
+                
+                if (mappedStat) {
+                    stats[mappedStat] = (stats[mappedStat] || 0) + statValue;
+                    console.log(`✅ Маппинг: "${statName}" -> "${mappedStat}" = ${statValue}`);
+                } else {
+                    console.warn(`❌ Неизвестная характеристика: "${statName}"`);
+                }
+            } else {
+                console.warn(`❌ Не удалось распарсить строку: "${statString}"`);
+            }
+        });
+    }
+    
+    console.log('📦 Итоговые статы из XML:', stats);
+    return stats;
 }
 
 function updateEquipmentSlotDisplay(slotType, equipmentData) {
@@ -217,4 +261,80 @@ function updateEquipmentSlotDisplay(slotType, equipmentData) {
     typeBadge.style.fontSize = '10px';
     typeBadge.style.fontWeight = 'bold';
     slotElement.appendChild(typeBadge);
+
+// equipment_application.js (добавить в конец файла)
+
+function removeEquipmentFromSlot(slotType) {
+    if (!window.equipmentData || !window.equipmentData[slotType]) {
+        console.log(`Нет экипировки в слоте ${slotType}`);
+        return;
+    }
+
+    // Удаляем данные экипировки
+    delete window.equipmentData[slotType];
+
+    // Очищаем слот в интерфейсе
+    clearEquipmentSlotDisplay(slotType);
+
+    // Удаляем статы из калькулятора
+    if (window.statCalculator) {
+        if (window.statCalculator.equipmentStats && window.statCalculator.equipmentStats[slotType]) {
+            delete window.statCalculator.equipmentStats[slotType];
+        }
+        window.statCalculator.updateStats();
+    }
+
+    // Обновляем состояние левой руки (если удаляем оружие)
+    if (slotType === 'rhand') {
+        updateLeftHandState();
+    }
+
+    // Сохраняем изменения
+    setTimeout(() => {
+        if (window.localStorageManager) {
+            window.localStorageManager.saveAllData();
+        }
+    }, 100);
+
+    console.log(`Экипировка снята со слота ${slotType}`);
+}
+
+function clearEquipmentSlotDisplay(slotType) {
+    const slotElement = document.querySelector(`.equipment-slot[data-slot="${slotType}"]`);
+    
+    if (!slotElement) {
+        console.error(`Слот ${slotType} не найден`);
+        return;
+    }
+
+    // Очищаем содержимое слота
+    slotElement.innerHTML = '';
+    slotElement.classList.remove('equipped');
+
+    // Восстанавливаем стандартную иконку
+    const defaultIcon = document.createElement('img');
+    defaultIcon.src = `/static/Ico/Button_Char/${getSlotIcon(slotType)}`;
+    defaultIcon.alt = getSlotName(slotType);
+    defaultIcon.style.width = '48px';
+    defaultIcon.style.height = '48px';
+    defaultIcon.style.objectFit = 'contain';
+    defaultIcon.style.marginBottom = '8px';
+
+    const nameElement = document.createElement('span');
+    nameElement.textContent = getSlotName(slotType);
+    nameElement.style.fontSize = '11px';
+    nameElement.style.fontWeight = '600';
+    nameElement.style.color = 'var(--dark)';
+    nameElement.style.textAlign = 'center';
+    nameElement.style.lineHeight = '1.2';
+    nameElement.style.maxWidth = '80px';
+    nameElement.style.wordWrap = 'break-word';
+
+    slotElement.appendChild(defaultIcon);
+    slotElement.appendChild(nameElement);
+}
+
+// Добавляем функции в глобальную область
+window.removeEquipmentFromSlot = removeEquipmentFromSlot;
+window.clearEquipmentSlotDisplay = clearEquipmentSlotDisplay;
 }

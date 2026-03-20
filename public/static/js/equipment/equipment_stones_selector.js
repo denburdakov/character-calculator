@@ -18,7 +18,7 @@ function openStoneSelector(slotType, equipmentType) {
         return;
     }
 
-    const stoneBonuses = window.statCalculator?.stoneCalculator?.getStoneBonuses?.() || {};
+    const stoneBonuses = window.stoneBonuses || stoneBonusesData; // Используем данные из конфига
     
     const stones = isWeaponOrShield ? StonesData.weapon : StonesData.regular;
     const stoneLevels = [1, 2, 3, 4, 5];
@@ -183,13 +183,27 @@ function openStoneSelector(slotType, equipmentType) {
 }
 
 function getStoneValueDisplay(stoneId, level, isWeapon, stoneBonuses) {
-    const stoneData = stoneBonuses[stoneId];
+    let stoneData;
+    
+    if (isWeapon) {
+        // Для оружия используем weapon камни
+        stoneData = stoneBonuses?.weapon?.[stoneId];
+    } else {
+        // Для обычной экипировки используем regular камни
+        stoneData = stoneBonuses?.regular?.[stoneId];
+    }
+    
     if (!stoneData || !stoneData.values) {
         return isWeapon ? '+0%' : '+0 ед.';
     }
     
     const value = stoneData.values[level - 1];
-    return isWeapon ? `+${value}%` : `+${value} ед.`;
+    
+    if (stoneData.type === 'percent' || isWeapon) {
+        return `+${value}%`;
+    } else {
+        return `+${value} ед.`;
+    }
 }
 
 function getStoneSubtitle(slotType, isWeapon = false, isTwoHandedWeapon = false) {
@@ -265,3 +279,6 @@ function updateSelectedStonesDisplay(slotType, isTwoHandedWeapon) {
         return `<div class="selected-stone-item">${stone.name} (ур. ${levelText})</div>`;
     }).join('');
 }
+
+// Добавляем глобальную переменную для доступа к stoneBonuses
+const stoneBonusesData = stoneBonuses;
