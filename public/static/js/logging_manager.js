@@ -892,10 +892,6 @@ if (typeof window !== 'undefined') {
         window.$exportLogs = () => loggingInstance.exportLogs();
         window.$showPanel = () => loggingInstance.createSimplePanel();
         
-        console.log('🚀 Enhanced Logging Manager успешно загружен!');
-        console.log('📝 Используйте $log, $debug, $error и другие методы для логирования');
-        console.log('🛠️  Используйте $showPanel() для отображения панели отладки');
-        
     } catch (error) {
         console.error('❌ Не удалось инициализировать систему логирования:', error);
         

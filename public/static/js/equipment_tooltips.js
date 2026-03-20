@@ -335,7 +335,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const bonus = {
             armour: 0,
             spell_armour: 0,
-            block: 0
+            block: 0,
+            stats: {} // Для бонусных статов
         };
 
         // Применяем бонус к базовой броне
@@ -349,6 +350,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (baseArmor.block > 0) {
                 bonus.block = Math.round(baseArmor.block * runeMultiplier);
             }
+        }
+
+        // Применяем бонус к Базовому стату
+        if (equipmentData.stats) {
+            Object.entries(equipmentData.stats).forEach(([stat, value]) => {
+                // Не применяем бонус рун к броне/блоку (они уже обработаны выше)
+                if (!['armour', 'spell_armour', 'block'].includes(stat)) {
+                    const bonusValue = Math.round(value * runeMultiplier);
+                    if (bonusValue > 0) {
+                        bonus.stats[stat] = bonusValue;
+                    }
+                }
+            });
         }
 
         return bonus;

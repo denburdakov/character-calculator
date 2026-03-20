@@ -28,7 +28,7 @@ class TalentCalculator {
                 'Приемы': {
                     stats: {
                         'hit': 0.75,          // 0.75% точности
-                        'crit': 0.75,         // 0.75% крита
+                        'crit_damage_resistance': 0.75,         // 0.75% Сопр. Крита
                         'armour': 0.5,        // 0.5% физ броня
                         'spell_armour': 0.5   // 0.5% маг броня
                     }
@@ -119,102 +119,6 @@ class TalentCalculator {
                 }
             }
         };
-    }
-
-    // Определяет, даёт ли очко процентные бонусы
-    givesPercentageBonus(pointsInBranch) {
-        // Очки, которые НЕ дают процентных бонусов (только дают навыки)
-        const noBonusPoints = [6, 12, 18, 24];
-        return !noBonusPoints.includes(pointsInBranch);
-    }
-
-    // Подсчитывает количество очков, дающих процентные бонусы
-    getEffectivePoints(pointsInBranch) {
-        let effectivePoints = 0;
-        
-        for (let i = 1; i <= pointsInBranch; i++) {
-            if (this.givesPercentageBonus(i)) {
-                effectivePoints++;
-            }
-        }
-        
-        return effectivePoints;
-    }
-
-    calculateTalentBonuses(characterClass, talentPoints, currentStats) {
-        const bonuses = {};
-        const classBonuses = this.talentBonuses[characterClass];
-
-        if (!classBonuses || !talentPoints || !currentStats) {
-            return bonuses;
-        }
-
-        Object.keys(talentPoints).forEach(branchName => {
-            const pointsInBranch = talentPoints[branchName];
-            const branchBonus = classBonuses[branchName];
-
-            if (branchBonus && pointsInBranch > 0) {
-                // Используем только эффективные очки (те, что дают проценты)
-                const effectivePoints = this.getEffectivePoints(pointsInBranch);
-                
-                if (effectivePoints > 0) {
-                    Object.keys(branchBonus.stats).forEach(statKey => {
-                        const bonusPercentPerPoint = branchBonus.stats[statKey];
-                        const currentValue = parseFloat(currentStats[statKey]) || 0;
-
-                        // Рассчитываем общий процент бонуса
-                        const totalBonusPercent = bonusPercentPerPoint * effectivePoints;
-                        
-                        // Рассчитываем абсолютное значение бонуса
-                        const totalBonus = currentValue * totalBonusPercent / 100;
-                        
-                        if (totalBonus > 0) {
-                            bonuses[statKey] = (bonuses[statKey] || 0) + totalBonus;
-                            
-                            console.log(`📊 Талант ${branchName}: ${statKey} = ${currentValue} × ${totalBonusPercent}% = +${totalBonus.toFixed(1)}`);
-                        }
-                    });
-                }
-            }
-        });
-
-        return bonuses;
-    }
-
-    applyTalentBonuses(totalStats, characterClass, talentPoints, baseStats) {
-        if (!totalStats || !characterClass || !talentPoints) {
-            console.warn('Недостаточно данных для применения талантов:', {
-                totalStats, characterClass, talentPoints
-            });
-            return totalStats || {};
-        }
-
-        const talentBonuses = this.calculateTalentBonuses(characterClass, talentPoints, totalStats);
-        const resultStats = { ...totalStats };
-
-        console.log('Бонусы от талантов:', talentBonuses);
-        console.log('Эффективные очки по веткам:', 
-            Object.keys(talentPoints).map(branch => ({
-                branch,
-                total: talentPoints[branch],
-                effective: this.getEffectivePoints(talentPoints[branch])
-            }))
-        );
-
-        Object.keys(talentBonuses).forEach(statKey => {
-            if (resultStats[statKey] !== undefined) {
-                resultStats[statKey] += talentBonuses[statKey];
-            } else {
-                resultStats[statKey] = talentBonuses[statKey];
-            }
-        });
-
-        return resultStats;
-    }
-
-    reset() {
-        // Сброс состояния калькулятора талантов, если нужно
-        console.log('Сброс талантов');
     }
 }
 

@@ -24,153 +24,175 @@ class RuneCalculator {
     }
 
     setRuneLevel(slotType, runeLevel) {
-        this.runeStats[slotType] = runeLevel;
+        if (runeLevel >= 0 && runeLevel <= 12) {
+            this.runeStats[slotType] = runeLevel;
+        }
     }
 
-    // применение бонусов рун к базовым статам
-    applyRuneBonuses(totalStats, equipmentStats) {
-        const stats = { ...totalStats };
+    // Получение множителя рун для слота
+    getRuneMultiplier(slotType, runeLevel) {
+        // 0 уровень - нет бонуса
+        if (runeLevel === 0 || runeLevel === '0' || !runeLevel) {
+            return 0;
+        }
         
-        Object.keys(this.runeStats).forEach(slotType => {
-            const runeLevel = this.runeStats[slotType];
-            const runeBonus = this.runeBonuses[runeLevel];
-            
-            if (!runeBonus) return;
+        const level = parseInt(runeLevel, 10);
+        if (isNaN(level) || level < 1 || level > 12) {
+            return 0;
+        }
+        
+        const runeData = this.runeBonuses[level];
+        if (!runeData) return 0;
+        
+        // Определяем тип слота и возвращаем соответствующий множитель
+        if (this.equipmentSlots.includes(slotType)) {
+            return runeData.equipment || 0;
+        } else if (this.jewelrySlots.includes(slotType)) {
+            return runeData.jewelry || 0;
+        } else if (this.weaponSlots.includes(slotType)) {
+            return runeData.weapon || 0;
+        }
+        
+        return 0;
+    }
 
-            let bonusMultiplier = 0;
-            if (this.equipmentSlots.includes(slotType)) {
-                bonusMultiplier = runeBonus.equipment;
-            } else if (this.jewelrySlots.includes(slotType)) {
-                bonusMultiplier = runeBonus.jewelry;
-            } else if (this.weaponSlots.includes(slotType)) {
-                bonusMultiplier = runeBonus.weapon;
-            }
-
-            if (bonusMultiplier > 0) {
-                // Применяем бонусы к базовой броне
-                this.applyRuneBonusToSlot(stats, slotType, bonusMultiplier);
-                
-                // Применяем бонусы к дополнительным статам экипировки
-                if (equipmentStats && equipmentStats[slotType]) {
-                    equipmentStats[slotType].forEach(equipStats => {
-                        Object.keys(equipStats).forEach(statKey => {
-                            const equipmentValue = equipStats[statKey];
-                            const bonusValue = Math.round(equipmentValue * bonusMultiplier);
-                            
-                            if (stats[statKey] !== undefined) {
-                                stats[statKey] += bonusValue;
-                            }
-                        });
-                    });
+    // Расчет бонуса от рун для конкретного предмета
+    calculateItemRuneBonus(itemStats, slotType, runeLevel) {
+        const multiplier = this.getRuneMultiplier(slotType, runeLevel);
+        if (multiplier === 0 || !itemStats) return {};
+        
+        const bonus = {};
+        Object.entries(itemStats).forEach(([stat, value]) => {
+            // Не применяем руны к процентным статам
+            if (!stat.includes('_percent')) {
+                const bonusValue = Math.round(value * multiplier);
+                if (bonusValue > 0) {
+                    bonus[stat] = bonusValue;
                 }
             }
         });
         
-        return stats;
+        return bonus;
     }
 
-    // применение бонусов рун к базовым статам
-    applyRuneBonusToSlot(totalStats, slotType, bonusMultiplier) {
-        if (!window.armorCalculator || !window.currentClass || !window.equipmentData) {
-            return;
+    // Получение базовых значений брони для слота с учетом класса
+    getBaseArmorForSlot(className, slotType, subType = null) {
+        if (!window.armorCalculator) return { armour: 0, spell_armour: 0, block: 0 };
+        
+        // Для плаща
+        if (slotType === 'cape' && subType) {
+            const capeBase = window.armorCalculator.capeBaseArmorValues[subType];
+            if (capeBase) {
+                return {
+                    armour: capeBase.armour || 0,
+                    spell_armour: capeBase.spell_armour || 0
+                };
+            }
         }
+        
+        // Для обычных слотов брони
+        if (window.armorCalculator.baseArmorValues[className] && 
+            window.armorCalculator.baseArmorValues[className][slotType]) {
+            return { ...window.armorCalculator.baseArmorValues[className][slotType] };
+        }
+        
+        // Для щита
+        if (slotType === 'shield' || slotType === 'lhand') {
+            if (window.armorCalculator.baseArmorValues[className] && 
+                window.armorCalculator.baseArmorValues[className]['shield']) {
+                return { ...window.armorCalculator.baseArmorValues[className]['shield'] };
+            }
+        }
+        
+        return { armour: 0, spell_armour: 0, block: 0 };
+    }
 
-        try {
-            const slotData = window.equipmentData[slotType];
-            if (!slotData) return;
+    // Расчет бонуса рун для базовой брони слота
+    calculateBaseArmorRuneBonus(className, slotType, runeLevel, subType = null) {
+        const multiplier = this.getRuneMultiplier(slotType, runeLevel);
+        if (multiplier === 0) return { armour: 0, spell_armour: 0, block: 0 };
+        
+        const baseArmor = this.getBaseArmorForSlot(className, slotType, subType);
+        
+        const bonus = {};
+        if (baseArmor.armour) {
+            bonus.armour = Math.round(baseArmor.armour * multiplier);
+        }
+        if (baseArmor.spell_armour) {
+            bonus.spell_armour = Math.round(baseArmor.spell_armour * multiplier);
+        }
+        if (baseArmor.block) {
+            bonus.block = Math.round(baseArmor.block * multiplier);
+        }
+        
+        return bonus;
+    }
 
-            // Получаем базовые значения брони для этого слота
-            const baseArmor = window.armorCalculator.getBaseArmor(
-                window.currentClass,
-                slotType,
-                slotData.equipmentType || '3-stat',
-                slotData.quality || 'orange',
-                slotData.quality || 'orange'
+    // Полный расчет всех бонусов рун для экипировки
+    calculateAllRuneBonuses(className, equipmentData) {
+        const results = {
+            flat: {},
+            bySlot: {}
+        };
+        
+        if (!equipmentData) return results;
+        
+        Object.entries(equipmentData).forEach(([slotType, itemData]) => {
+            if (!itemData) return;
+            
+            const runeLevel = itemData.runeLevel || 0;
+            if (runeLevel === 0) return;
+            
+            const slotBonus = {
+                base: {},
+                item: {}
+            };
+            
+            // 1. Бонус к базовой броне слота
+            const baseBonus = this.calculateBaseArmorRuneBonus(
+                className, 
+                slotType, 
+                runeLevel, 
+                itemData.quality || itemData.subType
             );
-
-            if (baseArmor) {
-                // Применяем бонус рун к базовой броне
-                if (baseArmor.armour) {
-                    const armorBonus = Math.round(baseArmor.armour * bonusMultiplier);
-                    totalStats.armour = (totalStats.armour || 0) + armorBonus;
-                }
-
-                if (baseArmor.spell_armour) {
-                    const spellArmorBonus = Math.round(baseArmor.spell_armour * bonusMultiplier);
-                    totalStats.spell_armour = (totalStats.spell_armour || 0) + spellArmorBonus;
-                }
-
-                // Блок применяем только для щита
-                if (baseArmor.block && slotType === 'lhand' && slotData.leftHandType === 'shield') {
-                    const blockBonus = Math.round(baseArmor.block * bonusMultiplier);
-                    totalStats.block = (totalStats.block || 0) + blockBonus;
+            
+            if (Object.keys(baseBonus).length > 0) {
+                slotBonus.base = baseBonus;
+                Object.entries(baseBonus).forEach(([stat, value]) => {
+                    results.flat[stat] = (results.flat[stat] || 0) + value;
+                });
+            }
+            
+            // 2. Бонус к дополнительным статам предмета
+            if (itemData.stats) {
+                const itemBonus = this.calculateItemRuneBonus(itemData.stats, slotType, runeLevel);
+                if (Object.keys(itemBonus).length > 0) {
+                    slotBonus.item = itemBonus;
+                    Object.entries(itemBonus).forEach(([stat, value]) => {
+                        results.flat[stat] = (results.flat[stat] || 0) + value;
+                    });
                 }
             }
-        } catch (error) {
-            console.error(`Ошибка применения бонусов рун к слоту ${slotType}:`, error);
-        }
+            
+            results.bySlot[slotType] = slotBonus;
+        });
+        
+        return results;
     }
 
-    // Метод для расчета бонуса рун для конкретного слота и статистик
-    calculateRuneBonusForEquipment(slotType, runeLevel, equipmentStats) {
-        if (!this.runeBonuses[runeLevel] || !equipmentStats) return {};
-
-        let bonusMultiplier = 0;
-        if (this.equipmentSlots.includes(slotType)) {
-            bonusMultiplier = this.runeBonuses[runeLevel].equipment;
-        } else if (this.jewelrySlots.includes(slotType)) {
-            bonusMultiplier = this.runeBonuses[runeLevel].jewelry;
-        } else if (this.weaponSlots.includes(slotType)) {
-            bonusMultiplier = this.runeBonuses[runeLevel].weapon;
-        }
-
-        const bonus = {};
-        if (bonusMultiplier > 0) {
-            Object.keys(equipmentStats).forEach(statKey => {
-                const equipmentValue = equipmentStats[statKey];
-                const bonusValue = Math.round(equipmentValue * bonusMultiplier);
-                bonus[statKey] = bonusValue;
-            });
-        }
-
-        return bonus;
+    // Проверка, является ли слот бижутерией
+    isJewelrySlot(slotType) {
+        return this.jewelrySlots.includes(slotType);
     }
 
-    // Расчет бонусов рун для статистик
-    calculateRuneBonuses(equipmentStats, runeLevel) {
-        if (!this.runeBonuses[runeLevel] || !equipmentStats) return {};
-
-        const bonusMultiplier = this.runeBonuses[runeLevel].equipment;
-        const bonus = {};
-
-        if (bonusMultiplier > 0) {
-            Object.keys(equipmentStats).forEach(statKey => {
-                const equipmentValue = equipmentStats[statKey];
-                const bonusValue = Math.round(equipmentValue * bonusMultiplier);
-                bonus[statKey] = bonusValue;
-            });
-        }
-
-        return bonus;
+    // Проверка, является ли слот оружием
+    isWeaponSlot(slotType) {
+        return this.weaponSlots.includes(slotType);
     }
 
-    getRuneBonusForSlot(slotType, runeLevel) {
-        if (!this.runeBonuses[runeLevel]) return 0;
-        
-        // Для щита используем бонус оружия
-        if (slotType === 'shield' || (slotType === 'lhand' && window.equipmentData?.lhand?.leftHandType === 'shield')) {
-            return this.runeBonuses[runeLevel].weapon;
-        }
-        
-        if (this.equipmentSlots.includes(slotType)) {
-            return this.runeBonuses[runeLevel].equipment;
-        } else if (this.jewelrySlots.includes(slotType)) {
-            return this.runeBonuses[runeLevel].jewelry;
-        } else if (this.weaponSlots.includes(slotType)) {
-            return this.runeBonuses[runeLevel].weapon;
-        }
-        
-        return 0;
+    // Проверка, является ли слот обычной экипировкой
+    isEquipmentSlot(slotType) {
+        return this.equipmentSlots.includes(slotType);
     }
 
     getRuneBonuses() {
@@ -185,3 +207,6 @@ class RuneCalculator {
         this.runeStats = {};
     }
 }
+
+// Создаем глобальный экземпляр
+window.runeCalculator = new RuneCalculator();

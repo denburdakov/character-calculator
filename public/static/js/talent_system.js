@@ -504,25 +504,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Применение талантов
     function applyTalents() {
-        if (!window.statCalculator || !window.statCalculator.currentClass) {
-            console.warn('Калькулятор статистик не доступен');
+        if (!window.statCalculator) {
+            console.warn('StatCalculator не доступен');
             return;
         }
         
+        // Рассчитываем ауры от талантов
         const talentAuras = calculateTalentAuras(currentClass, talentPoints[currentClass], selectedTalents[currentClass]);
         
+        // Передаем данные в statCalculator
         window.statCalculator.setTalentPoints(currentClass, talentPoints[currentClass]);
-        window.statCalculator.setSelectedTalents(selectedTalents[currentClass]);
+        window.statCalculator.setSelectedTalents(currentClass, selectedTalents[currentClass]);
         window.statCalculator.setTalentAuras(talentAuras);
         
+        // Получаем и отображаем обновленные статы
         const newStats = window.statCalculator.calculateTotalStats();
-        
         if (window.updateStatsDisplay) {
             window.updateStatsDisplay(newStats);
         }
         
         console.log('✅ Таланты применены. Потрачено очков:', spentPoints);
-        console.log('Выбранные таланты:', selectedTalents[currentClass]);
     }
 
     // Расчет активных аур от талантов
@@ -625,6 +626,28 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Система талантов: класс изменен на', className);
         }
     };
-
+    
+    // Обновляем функцию applyTalents для использования statCalculator
+    window.applyTalents = function() {
+        if (!window.statCalculator) {
+            console.warn('Калькулятор статистик не доступен');
+            return;
+        }
+        
+        const talentAuras = calculateTalentAuras(currentClass, talentPoints[currentClass], selectedTalents[currentClass]);
+        
+        window.statCalculator.setTalentPoints(currentClass, talentPoints[currentClass]);
+        window.statCalculator.setSelectedTalents(selectedTalents[currentClass]);
+        window.statCalculator.setTalentAuras(talentAuras);
+        
+        const newStats = window.statCalculator.calculateTotalStats();
+        
+        if (window.updateStatsDisplay) {
+            window.updateStatsDisplay(newStats);
+        }
+        
+        console.log('✅ Таланты применены. Потрачено очков:', spentPoints);
+        console.log('Выбранные таланты:', selectedTalents[currentClass]);
+    };
     initializeTalentSystem();
 });

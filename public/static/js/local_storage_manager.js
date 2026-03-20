@@ -36,11 +36,6 @@ class LocalStorageManager {
                 talentSpentPoints: spentPoints,
                 availablePoints: window.talentSystem?.availablePoints || 42,
                 
-                // Эликсиры
-                elixirs: {
-                    offensive: window.statCalculator?.elixirStats?.offensive || 'none',
-                    defensive: window.statCalculator?.elixirStats?.defensive || 'none'
-                },
                 
                 // Баффы
                 guildBuff: window.statCalculator?.guildBuff || false,

@@ -1,911 +1,896 @@
+// stat_calculator.js
 class StatCalculator {
     constructor() {
-        this.baseStats = {};
-        this.equipmentStats = {};
-        this.talentStats = {};
-        this.runeStats = {};
-        this.stoneStats = {};
-        this.elixirStats = {};
+        this.baseStats = window.characterStats || {};
+        this.currentClass = 'warrior';
+        
+        // Текущие модификаторы
         this.talentPoints = {};
-        this.guildBuff = false;
-        this.currentClass = null;
+        this.selectedTalents = {};
         this.talentAuras = {};
-
-        // Инициализация зависимостей с защитой от ошибок
-        this.initializeDependencies();
-    }
-
-    // Метод для безопасной инициализации зависимостей
-    initializeDependencies() {
-        if (typeof StoneCalculator !== 'undefined') {
-            this.stoneCalculator = new StoneCalculator();
-        } else {
-            console.warn('StoneCalculator не найден, использую заглушку');
-            this.stoneCalculator = { 
-                addStones: () => {}, 
-                applyStoneBonuses: (stats) => stats,
-                removeStones: () => {},
-                reset: () => {},
-                calculateStoneTotal: () => ({})
-            };
-        }
+        this.elixirStats = {
+            offensive: 'none',
+            defensive: 'none'
+        };
+        this.guildBuff = false;
         
-        if (typeof RuneCalculator !== 'undefined') {
-            this.runeCalculator = new RuneCalculator();
-        } else {
-            console.warn('RuneCalculator не найден, использую заглушку');
-            this.runeCalculator = { 
-                setRuneLevel: () => {}, 
-                applyRuneBonuses: (stats) => stats,
-                reset: () => {},
-                getRuneBonuses: () => ({})
-            };
-        }
+        // Бонусы от экипировки (будут добавляться из equipment)
+        this.equipmentBonuses = {
+            flat: {},      // Плоские бонусы (числа)
+            percent: {}    // Процентные бонусы
+        };
         
-        if (typeof ElixirCalculator !== 'undefined') {
-            this.elixirCalculator = new ElixirCalculator();
-        } else {
-            console.warn('ElixirCalculator не найден, использую заглушку');
-            this.elixirCalculator = { 
-                setElixirs: () => {}, 
-                setGuildBuff: () => {},
-                applyArmorBonuses: (stats) => stats,
-                applyPercentageBonuses: (stats) => stats,
-                reset: () => {},
-                getElixirBonuses: () => ({})
-            };
-        }
+        // Дополнительные бонусы (для будущих расширений)
+        this.extraBonuses = {
+            flat: {},      // Плоские бонусы (числа)
+            percent: {}    // Процентные бонусы
+        };
         
-        if (typeof TalentCalculator !== 'undefined') {
-            this.talentCalculator = new TalentCalculator();
-        } else {
-            console.warn('TalentCalculator не найден, использую заглушку');
-            this.talentCalculator = { 
-                applyTalentBonuses: (stats) => stats 
-            };
-        }
-
-        // Инициализация armorCalculator если он нужен
-        if (typeof ArmorCalculator !== 'undefined' && typeof window.armorCalculator === 'undefined') {
-            window.armorCalculator = new ArmorCalculator();
-        }
-    }
-
-    static preciseRound(value, precision = 0) {
-        if (typeof value !== 'number') return 0;
-        const multiplier = Math.pow(10, precision);
-        return Math.round(value * multiplier) / multiplier;
-    }
-
-    setTalentAuras(auras) {
-        this.talentAuras = { ...auras };
-    }
-
-    applyPriestWeaponBonuses(totalStats) {
-        if (this.currentClass !== 'priest' || !window.equipmentData) {
-            return totalStats;
-        }
-
-        try {
-            if (window.priestBonuses && typeof window.priestBonuses.applyPriestBonuses === 'function') {
-                return window.priestBonuses.applyPriestBonuses(
-                    totalStats,
-                    this.currentClass,
-                    window.equipmentData
-                );
-            }
-        } catch (error) {
-            console.error('Ошибка в бустах жреца:', error);
-        }
-
-        return totalStats;
-    }
-
-    hasPriestWeaponConfiguration() {
-        if (this.currentClass !== 'priest' || !window.equipmentData) {
-            return false;
-        }
+        // Хранилище данных экипировки
+        this.equipmentStats = {};
+        this.stoneStats = {};
         
-        const rightHand = window.equipmentData.rhand;
-        const leftHand = window.equipmentData.lhand;
+        // Кэш для хранения результатов расчетов
+        this.cache = {
+            base: {},
+            equipment: {},
+            stones: {},
+            talents: {},
+            elixirs: {},
+            guild: {},
+            total: {}
+        };
         
-        if (!rightHand) {
-            return false;
-        }
-        
-        const weaponType = rightHand.weaponType;
-        const leftHandType = leftHand?.leftHandType;
-        
-        if (weaponType === 'one-handed' && leftHandType === 'weapon') {
-            return true;
-        }
-        else if (weaponType === 'one-handed' && leftHandType === 'shield') {
-            return true;
-        }
-        else if (weaponType === 'two-handed') {
-            return true;
-        }
-        
-        return false;
-    }
-
-    // Установка очков талантов
-    setTalentPoints(characterClass, talentPoints) {
-        this.talentPoints[characterClass] = { ...talentPoints };
-    }
-
-    // Установка базовых статистик класса
-    setBaseStats(characterClass, stats) {
-        if (!characterClass || !stats) {
-            console.error('Некорректные параметры для setBaseStats:', { characterClass, stats });
-            return;
-        }
-
-        console.log('✅ Установка базовых статов для класса:', characterClass, stats);
-        
-        this.baseStats[characterClass] = { ...stats };
-        this.currentClass = characterClass;
-        
-        // Проверяем, что статы действительно установлены
-        if (!this.baseStats[characterClass]) {
-            console.error('❌ Не удалось установить базовые статы для класса:', characterClass);
-        }
-    }
-
-    // Проверка готовности калькулятора
-    isReady() {
-        return this.currentClass && this.baseStats[this.currentClass];
-    }
-
-    // Безопасный метод получения базовых статов
-    getBaseStats() {
-        if (!this.currentClass) {
-            console.warn('Текущий класс не установлен');
-            return {};
-        }
-        
-        const baseStats = this.baseStats[this.currentClass];
-        if (!baseStats) {
-            console.warn('Базовые статы не найдены для класса:', this.currentClass);
-            return {};
-        }
-        
-        return baseStats;
-    }
-
-    static preciseRound(value, precision = 0) {
-        if (typeof value !== 'number') return 0;
-        const multiplier = Math.pow(10, precision);
-        return Math.round(value * multiplier) / multiplier;
-    }
-
-    // Добавление статистик от экипировки
-    addEquipmentStats(slotType, stats) {
-        if (!this.equipmentStats[slotType]) {
-            this.equipmentStats[slotType] = [];
-        }
-        this.equipmentStats[slotType].push(stats);
-    }
-
-    // Установка уровня рун
-    setRuneLevel(slotType, runeLevel) {
-        this.runeStats[slotType] = runeLevel;
-        if (this.runeCalculator && this.runeCalculator.setRuneLevel) {
-            this.runeCalculator.setRuneLevel(slotType, runeLevel);
-        }
-    }
-
-    // Добавление камней
-    addStones(slotType, stones) {
-        if (!this.stoneStats[slotType]) {
-            this.stoneStats[slotType] = [];
-        }
-        this.stoneStats[slotType] = stones;
-        if (this.stoneCalculator && this.stoneCalculator.addStones) {
-            this.stoneCalculator.addStones(slotType, stones);
-        }
-    }
-
-    // Установка эликсиров (делегируем ElixirCalculator)
-    setElixirs(offensiveElixir, defensiveElixir) {
-        this.elixirStats.offensive = offensiveElixir;
-        this.elixirStats.defensive = defensiveElixir;
-        if (this.elixirCalculator && this.elixirCalculator.setElixirs) {
-            this.elixirCalculator.setElixirs(offensiveElixir, defensiveElixir);
-        }
-    }
-
-    // Установка гильдейского баффа (делегируем ElixirCalculator)
-    setGuildBuff(enabled) {
-        this.guildBuff = enabled;
-        if (this.elixirCalculator && this.elixirCalculator.setGuildBuff) {
-            this.elixirCalculator.setGuildBuff(enabled);
-        }
-    }
-
-    static formatNumber(number) {
-        if (typeof number !== 'number') {
-            return '0';
-        }
-        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        // Инициализация
+        this.init();
     }
     
-    updateStats() {
+    init() {
+        console.log('StatCalculator инициализирован');
+        this.loadFromLocalStorage();
+    }
+    
+    // Загрузка сохраненных данных
+    loadFromLocalStorage() {
         try {
-            // Проверяем готовность калькулятора
-            if (!this.isReady()) {
-                console.warn('Калькулятор не готов для обновления статов. Текущий класс:', this.currentClass);
-                
-                // Пытаемся инициализировать базовые статы
-                if (this.currentClass && window.characterStats && window.characterStats[this.currentClass]) {
-                    console.log('🔄 Инициализируем базовые статы для класса:', this.currentClass);
-                    this.setBaseStats(this.currentClass, window.characterStats[this.currentClass]);
-                } else {
-                    return; // Не продолжаем если калькулятор не готов
-                }
+            const saved = localStorage.getItem('statCalculator');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.currentClass = data.currentClass || 'warrior';
+                this.elixirStats = data.elixirStats || { offensive: 'none', defensive: 'none' };
+                this.guildBuff = data.guildBuff || false;
             }
-
-            // Инициализируем armorCalculator если нужно
-            if (typeof window.armorCalculator === 'undefined') {
-                if (typeof ArmorCalculator !== 'undefined') {
-                    window.armorCalculator = new ArmorCalculator();
-                } else {
-                    console.error('ArmorCalculator не найден');
-                    return;
-                }
-            }
-            
-            if (typeof window.equipmentData === 'undefined') {
-                window.equipmentData = {};
-            }
-
-            // Расчет статистик
-            const totalStats = this.calculateTotalStats();
-            
-            // Обновляем отображение
-            if (typeof window.updateStatsDisplay === 'function') {
-                window.updateStatsDisplay(totalStats);
-            }
-            
-            // Обновляем отображение брони
-            this.updateArmorStats(totalStats);
-            
-        } catch (error) {
-            console.error('Ошибка в updateStats:', error);
+        } catch (e) {
+            console.warn('Не удалось загрузить данные из localStorage', e);
         }
     }
-
-    updateArmorStats(totalStats) {
-        if (!totalStats || typeof totalStats !== 'object') {
-            totalStats = { armour: 0, spell_armour: 0, block: 0 };
-        }
-
-        const armorElement = document.getElementById('armour');
-        const spellArmorElement = document.getElementById('spell_armour');
-        const blockElement = document.getElementById('block');
-        
-        if (armorElement) {
-            armorElement.textContent = StatCalculator.formatNumber(totalStats.armour || 0);
-        }
-        
-        if (spellArmorElement) {
-            spellArmorElement.textContent = StatCalculator.formatNumber(totalStats.spell_armour || 0);
-        }
-        
-        if (blockElement) {
-            blockElement.textContent = StatCalculator.formatNumber(totalStats.block || 0);
-        }
-    }
-
-    // Упрощенный расчет брони
-    calculateTotalArmor() {
+    
+    // Сохранение данных
+    saveToLocalStorage() {
         try {
-            if (!this.isReady()) {
-                return { armour: 0, spell_armour: 0, block: 0 };
-            }
-            
-            let totalStats = this.calculateTotalStats();
-            
-            // Получаем базовые значения для процентных расчетов
-            const baseForPercentage = this.getBaseForPercentage();
-            
-            // Применяем бонусы эликсиров и гильдейского баффа к броне
-            if (this.elixirCalculator) {
-                const armorStats = {
-                    armour: totalStats.armour || 0,
-                    spell_armour: totalStats.spell_armour || 0,
-                    block: totalStats.block || 0
-                };
-                
-                const boostedArmor = this.elixirCalculator.applyArmorBonuses(armorStats, baseForPercentage);
-                
-                totalStats.armour = boostedArmor.armour;
-                totalStats.spell_armour = boostedArmor.spell_armour;
-                totalStats.block = boostedArmor.block;
-            }
-            
-            return {
-                armour: totalStats.armour || 0,
-                spell_armour: totalStats.spell_armour || 0,
-                block: totalStats.block || 0
+            const data = {
+                currentClass: this.currentClass,
+                elixirStats: this.elixirStats,
+                guildBuff: this.guildBuff
             };
-        } catch (error) {
-            console.error('Ошибка в calculateTotalArmor:', error);
-            return { armour: 0, spell_armour: 0, block: 0 };
+            localStorage.setItem('statCalculator', JSON.stringify(data));
+        } catch (e) {
+            console.warn('Не удалось сохранить данные в localStorage', e);
         }
     }
-
-    // Расчет базовой брони от экипировки
-    calculateBaseArmorFromEquipment() {
-        let totalArmor = { armour: 0, spell_armour: 0 };
-        
-        if (!window.equipmentData || !this.currentClass) {
-            return totalArmor;
+    
+    // Установка текущего класса
+    setClass(className) {
+        if (this.baseStats[className]) {
+            this.currentClass = className;
+            this.clearCache();
+            this.saveToLocalStorage();
+            return true;
         }
-
-        const armorSlots = ['helm', 'shoulders', 'chest', 'pants', 'boots', 'hands', 'bracers', 'belt', 'cape'];
-        
-        armorSlots.forEach(slotType => {
-            if (window.equipmentData[slotType]) {
-                const slotArmor = window.armorCalculator.getBaseArmor(
-                    this.currentClass, 
-                    slotType,
-                    '3-stat',
-                    'orange',
-                    'orange'
-                );
-                
-                if (slotArmor) {
-                    totalArmor.armour += slotArmor.armour || 0;
-                    totalArmor.spell_armour += slotArmor.spell_armour || 0;
-                }
-            }
-        });
-
-        return totalArmor;
+        return false;
     }
-
-    // Расчет всех статистик
-    calculateTotalStats() {
-        // Проверяем готовность калькулятора
-        if (!this.isReady()) {
-            console.warn('Невозможно рассчитать статистики: калькулятор не готов');
-            console.log('Текущий класс:', this.currentClass);
-            console.log('Доступные классы:', Object.keys(this.baseStats));
+    
+    // Установка очков талантов (из talent_system.js)
+    setTalentPoints(className, points) {
+        this.talentPoints[className] = { ...points };
+        this.clearCache();
+    }
+    
+    // Установка выбранных талантов (из talent_system.js)
+    setSelectedTalents(className, talents) {
+        this.selectedTalents[className] = { ...talents };
+        this.clearCache();
+    }
+    
+    // Установка аур от талантов (из talent_system.js)
+    setTalentAuras(auras) {
+        this.talentAuras = { ...auras };
+        this.clearCache();
+    }
+    
+    // Установка эликсиров
+    setElixirs(offensive, defensive) {
+        this.elixirStats = {
+            offensive: offensive || 'none',
+            defensive: defensive || 'none'
+        };
+        this.clearCache();
+        this.saveToLocalStorage();
+    }
+    
+    // Установка гильдбаффа
+    setGuildBuff(enabled) {
+        this.guildBuff = enabled;
+        this.clearCache();
+        this.saveToLocalStorage();
+    }
+    
+    // Очистка кэша
+    clearCache() {
+        this.cache = {
+            base: {},
+            equipment: {},
+            stones: {},
+            talents: {},
+            elixirs: {},
+            guild: {},
+            total: {}
+        };
+    }
+    
+    // Получение базовых статов класса
+    getBaseStats() {
+        const className = this.currentClass;
+        if (this.cache.base[className]) {
+            return this.cache.base[className];
+        }
+        
+        const stats = this.baseStats[className];
+        if (!stats) {
+            console.error(`Класс ${className} не найден в базе`);
             return {};
         }
-
-        const currentClassStats = this.baseStats[this.currentClass];
-        if (!currentClassStats) {
-            console.error('Базовые статистики не найдены для класса:', this.currentClass);
-            return {};
-        }
-
-        // Шаг 1: Базовые статистики класса
-        let totalStats = { ...currentClassStats };
-
-        // Шаг 2: Базовая броня от экипировки
-        const baseArmor = this.calculateBaseArmorFromAllEquipment();
-        totalStats.armour += baseArmor.armour || 0;
-        totalStats.spell_armour += baseArmor.spell_armour || 0;
-        totalStats.block += baseArmor.block || 0;
-
-        // Шаг 3: Статистики от экипировки
-        totalStats = this.addEquipmentStatsToTotal(totalStats);
         
-        // Шаг 4: Получаем БАЗОВЫЕ значения для процентных расчетов
-        const baseForPercentage = this.getBaseForPercentage();
-        
-        // Шаг 5: Бонусы от талантов
-        if (this.talentPoints[this.currentClass] && this.talentCalculator) {
-            const hasTalents = Object.values(this.talentPoints[this.currentClass]).some(points => points > 0);
-            if (hasTalents) {
-                const talentBonuses = this.talentCalculator.calculateTalentBonuses(
-                    this.currentClass, 
-                    this.talentPoints[this.currentClass], 
-                    baseForPercentage
-                );
-                
-                Object.keys(talentBonuses).forEach(stat => {
-                    if (totalStats[stat] !== undefined && talentBonuses[stat] > 0) {
-                        const baseValue = baseForPercentage[stat] || 0;
-                        const talentBonus = talentBonuses[stat];
-                        const valueAfterTalents = Math.floor(baseValue + talentBonus);
-                        totalStats[stat] = valueAfterTalents;
-                    }
-                });
-            }
-        }
-        
-        // Шаг 6: Бонусы от эликсиров и гильдейского баффа
-        if (this.elixirCalculator) {
-            totalStats = this.applyElixirAndGuildBonuses(totalStats, baseForPercentage);
-        }
-        
-        // Шаг 7: Бонусы от рун
-        if (this.runeCalculator && this.runeCalculator.applyRuneBonuses) {
-            totalStats = this.runeCalculator.applyRuneBonuses(totalStats, this.equipmentStats);
-        }
-        
-        // Шаг 8: Бонусы от камней
-        if (this.stoneCalculator && this.stoneCalculator.applyStoneBonuses) {
-            totalStats = this.stoneCalculator.applyStoneBonuses(totalStats);
-        }
-        
-        // Шаг 9: Специальные бонусы жреца
-        totalStats = this.applyPriestWeaponBonuses(totalStats);
-        
-        // Шаг 10: Активные ауры талантов
-        totalStats = this.applyTalentAuras(totalStats);
-
-        return this.convertToInt(totalStats);
+        // Создаем копию базовых статов
+        this.cache.base[className] = { ...stats };
+        return this.cache.base[className];
     }
-
-    applyElixirAndGuildBonuses(totalStats, baseForPercentage) {
-        let stats = { ...totalStats };
-        try {
-            if (this.elixirCalculator) {
-                const elixirBonuses = this.elixirCalculator.elixirBonuses;
-                
-                const offensiveElixir = this.elixirStats.offensive;
-                const defensiveElixir = this.elixirStats.defensive;
-                
-                if (offensiveElixir && offensiveElixir !== 'none') {
-                    const offensiveBonus = elixirBonuses[offensiveElixir];
-                    if (offensiveBonus && offensiveBonus.stats) {
-                        Object.keys(offensiveBonus.stats).forEach(stat => {
-                            if (baseForPercentage && baseForPercentage[stat] !== undefined) {
-                                const bonusPercent = offensiveBonus.stats[stat];
-                                const baseValue = parseFloat(baseForPercentage[stat]);
-                                const bonusValue = Math.floor(baseValue * bonusPercent);
-                                
-                                if (bonusValue > 0) {
-                                    stats[stat] = (stats[stat] || 0) + bonusValue;
-                                }
-                            }
-                        });
-                    }
-                }
-
-                if (defensiveElixir && defensiveElixir !== 'none') {
-                    const defensiveBonus = elixirBonuses[defensiveElixir];
-                    if (defensiveBonus && defensiveBonus.stats) {
-                        Object.keys(defensiveBonus.stats).forEach(stat => {
-                            if (baseForPercentage && baseForPercentage[stat] !== undefined) {
-                                const bonusPercent = defensiveBonus.stats[stat];
-                                const baseValue = parseFloat(baseForPercentage[stat]);
-                                const bonusValue = Math.floor(baseValue * bonusPercent);
-                                
-                                if (bonusValue > 0) {
-                                    stats[stat] = (stats[stat] || 0) + bonusValue;
-                                }
-                            }
-                        });
-                    }
-                }
-                
-                if (this.guildBuff && this.elixirCalculator.applyGuildBuffToStats) {
-                    stats = this.elixirCalculator.applyGuildBuffToStats(stats, baseForPercentage);
-                }
-            }
-            
-            return stats;
-        } catch (error) {
-            console.error('Ошибка в applyElixirAndGuildBonuses:', error);
-            return totalStats;
+    
+    // Получение множителя рун для слота
+    getRuneMultiplier(slotType, runeLevel) {
+        // Если нет рун или нет калькулятора
+        if (runeLevel === 0 || runeLevel === '0' || !runeLevel || !window.runeCalculator) {
+            return 0;
         }
-    }
-
-    applyElixirBonuses(stats, baseForPercentage) {
-        try {
-            const elixirBonuses = this.elixirCalculator.elixirBonuses;
-
-            const offensiveElixir = this.elixirStats.offensive;
-            const defensiveElixir = this.elixirStats.defensive;
-            
-            if (offensiveElixir && offensiveElixir !== 'none') {
-                const offensiveBonus = elixirBonuses[offensiveElixir];
-                if (offensiveBonus && offensiveBonus.stats) {
-                    Object.keys(offensiveBonus.stats).forEach(stat => {
-                        if (baseForPercentage && baseForPercentage[stat] !== undefined) {
-                            const bonusPercent = offensiveBonus.stats[stat];
-                            const baseValue = parseFloat(baseForPercentage[stat]);
-                            const bonusValue = Math.floor(baseValue * bonusPercent);
-                            
-                            if (bonusValue > 0) {
-                                stats[stat] = (stats[stat] || 0) + bonusValue;
-                            }
-                        }
-                    });
-                }
-            }
-
-            if (defensiveElixir && defensiveElixir !== 'none') {
-                const defensiveBonus = elixirBonuses[defensiveElixir];
-                if (defensiveBonus && defensiveBonus.stats) {
-                    Object.keys(defensiveBonus.stats).forEach(stat => {
-                        if (baseForPercentage && baseForPercentage[stat] !== undefined) {
-                            const bonusPercent = defensiveBonus.stats[stat];
-                            const baseValue = parseFloat(baseForPercentage[stat]);
-                            const bonusValue = Math.floor(baseValue * bonusPercent);
-                            
-                            if (bonusValue > 0) {
-                                stats[stat] = (stats[stat] || 0) + bonusValue;
-                            }
-                        }
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Ошибка в applyElixirBonuses:', error);
-        }
-    }
-
-    applyGuildBuffBonuses(stats, baseForPercentage) {
-        try {
-            if (!stats || !baseForPercentage) {
-                console.error('Некорректные параметры в applyGuildBuffBonuses');
-                return;
-            }
-
-            // Основной бонус 3% ко ВСЕМ статам кроме скорости передвижения
-            Object.keys(baseForPercentage).forEach(stat => {
-                // Исключаем только скорость передвижения из гильдейского баффа
-                if (stat !== 'speed' && typeof baseForPercentage[stat] === 'number') {
-                    const baseValue = baseForPercentage[stat];
-                    const bonusValue = Math.floor(baseValue * this.guildBuffBonus);
-                    
-                    if (bonusValue > 0) {
-                        stats[stat] = (stats[stat] || 0) + bonusValue;
-                    }
-                }
-            });
-
-            // Дополнительный бонус 5% к здоровью (поверх основного 3%)
-            if (baseForPercentage.hp !== undefined) {
-                const baseHP = baseForPercentage.hp;
-                const healthBonus = Math.floor(baseHP * this.guildBuffHealthBonus);
-                
-                if (healthBonus > 0) {
-                    stats.hp += healthBonus;
-                }
-            }
-
-            // Дополнительный бонус 5% к сопротивлению критическому урону (поверх основного 3%)
-            if (baseForPercentage.crit_damage_resistance !== undefined) {
-                const baseCritResistance = baseForPercentage.crit_damage_resistance;
-                const critResistanceBonus = Math.floor(baseCritResistance * this.guildBuffCritResistanceBonus);
-                
-                if (critResistanceBonus > 0) {
-                    stats.crit_damage_resistance += critResistanceBonus;
-                }
-            }
-
-        } catch (error) {
-            console.error('Ошибка в applyGuildBuffBonuses:', error);
-        }
-    }
-
-    // Обновленный метод для применения бонусов талантов
-    applyTalentBonuses(totalStats, talentBonuses, baseForPercentage) {
-        const stats = { ...totalStats };
         
-        Object.keys(talentBonuses).forEach(stat => {
-            if (stats[stat] !== undefined && talentBonuses[stat] > 0) {
-                const baseValue = baseForPercentage[stat] || 0;
-                const talentBonus = talentBonuses[stat];
-                
-                // Рассчитываем новое значение с учетом бонуса талантов
-                const valueAfterTalents = Math.floor(baseValue + talentBonus);
-                stats[stat] = valueAfterTalents;
-            }
-        });
+        // Преобразуем в число
+        const level = parseInt(runeLevel, 10);
         
-        return stats;
+        // Проверяем корректность уровня
+        if (isNaN(level) || level < 1 || level > 12) {
+            console.warn(`Некорректный уровень рун: ${runeLevel}`);
+            return 0;
+        }
+        
+        const runeBonuses = window.runeCalculator.runeBonuses;
+        const runeData = runeBonuses[level];
+        
+        if (!runeData) {
+            console.error(`❌ ОШИБКА: Данные для уровня рун ${level} не найдены!`);
+            return 0;
+        }
+        
+        // Определяем тип слота
+        const equipmentSlots = window.runeCalculator.equipmentSlots || 
+            ['chest', 'helm', 'shoulders', 'pants', 'boots', 'hands', 'bracers', 'belt', 'cape'];
+        const jewelrySlots = window.runeCalculator.jewelrySlots || 
+            ['neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
+        const weaponSlots = window.runeCalculator.weaponSlots || ['rhand', 'lhand'];
+        
+        let multiplier = 0;
+        
+        if (equipmentSlots.includes(slotType)) {
+            multiplier = runeData.equipment || 0;
+        } else if (jewelrySlots.includes(slotType)) {
+            multiplier = runeData.jewelry || 0;
+        } else if (weaponSlots.includes(slotType)) {
+            multiplier = runeData.weapon || 0;
+        }
+        
+        return multiplier;
     }
-
-    convertToInt(stats) {
-        const result = {};
-        for (const [key, value] of Object.entries(stats)) {
-            if (typeof value === 'number') {
-                result[key] = Math.round(value);
-            } else {
-                result[key] = value;
+    
+    // Получение базовых значений для слота
+    getBaseValuesForSlot(slotType, equipment) {
+        const result = { armour: 0, spell_armour: 0, block: 0 };
+        
+        if (!window.armorCalculator) return result;
+        
+        const currentClass = this.currentClass;
+        const armorCalc = window.armorCalculator;
+        
+        // 1. Базовая броня для обычной экипировки
+        if (armorCalc.baseArmorValues[currentClass] && 
+            armorCalc.baseArmorValues[currentClass][slotType]) {
+            const base = armorCalc.baseArmorValues[currentClass][slotType];
+            result.armour = base.armour || 0;
+            result.spell_armour = base.spell_armour || 0;
+            result.block = base.block || 0;
+        }
+        
+        // 2. Для плаща
+        if (slotType === 'cape' && equipment?.quality) {
+            const quality = equipment.quality;
+            if (armorCalc.capeBaseArmorValues[quality]) {
+                const cape = armorCalc.capeBaseArmorValues[quality];
+                result.armour = cape.armour || 0;
+                result.spell_armour = cape.spell_armour || 0;
             }
         }
+        
+        // 3. Для щита
+        if (slotType === 'lhand' && equipment?.leftHandType === 'shield') {
+            if (armorCalc.baseArmorValues[currentClass] && 
+                armorCalc.baseArmorValues[currentClass]['shield']) {
+                const shieldBase = armorCalc.baseArmorValues[currentClass]['shield'];
+                result.block = shieldBase.block || 0;
+            }
+        }
+        
         return result;
     }
     
-    calculateBaseArmorFromAllEquipment() {
-        let totalArmor = { armour: 0, spell_armour: 0, block: 0 };
+    // Расчет бонусов от экипировки и рун
+    calculateEquipmentBonuses() {
+        const cacheKey = `${this.currentClass}_${JSON.stringify(this.equipmentStats)}`;
         
-        if (!window.equipmentData || !this.currentClass) {
-            return totalArmor;
+        if (this.cache.equipment[cacheKey]) {
+            return this.cache.equipment[cacheKey];
         }
-
-        // Броня от обычной экипировки
-        const armorSlots = ['helm', 'shoulders', 'chest', 'pants', 'boots', 'hands', 'bracers', 'belt'];
         
-        armorSlots.forEach(slotType => {
-            if (window.equipmentData[slotType]) {
-                const slotData = window.equipmentData[slotType];
-                const slotArmor = window.armorCalculator.getBaseArmor(
-                    this.currentClass, 
-                    slotType,
-                    slotData.equipmentType || '3-stat'
-                );
-                
-                if (slotArmor) {
-                    totalArmor.armour += slotArmor.armour || 0;
-                    totalArmor.spell_armour += slotArmor.spell_armour || 0;
-                }
-            }
-        });
-
-        // Броня от плаща
-        if (window.equipmentData.cape) {
-            const capeData = window.equipmentData.cape;
-            const capeArmor = window.armorCalculator.getBaseArmor(
-                this.currentClass,
-                'cape',
-                capeData.equipmentType || '3-stat',
-                capeData.quality || 'orange'
-            );
-            
-            if (capeArmor) {
-                totalArmor.armour += capeArmor.armour || 0;
-                totalArmor.spell_armour += capeArmor.spell_armour || 0;
-            }
-        }
-
-        // Броня от бижутерии
-        const jewelrySlots = ['neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
-        jewelrySlots.forEach(slotType => {
-            if (window.equipmentData[slotType]) {
-                const jewelryData = window.equipmentData[slotType];
-                if (jewelryData.quality === 'orange') {
-                    const runeBonus = window.armorCalculator.jewelryRuneBonuses[jewelryData.runeLevel] || window.armorCalculator.jewelryRuneBonuses[0];
-                    
-                    totalArmor.armour += runeBonus.armour || 0;
-                    totalArmor.spell_armour += runeBonus.spell_armour || 0;
-                }
-            }
-        });
-
-        // Блок от щита
-        if (window.equipmentData?.lhand && window.equipmentData.lhand.leftHandType === 'shield') {
-            const shieldData = window.equipmentData.lhand;
-            const shieldBlock = window.armorCalculator.getShieldBaseBlock().block || 0;
-            
-            let runeMultiplier = 0;
-            if (this.runeCalculator && shieldData.runeLevel) {
-                runeMultiplier = this.runeCalculator.getRuneBonusForSlot('lhand', shieldData.runeLevel) || 0;
-            }
-            
-            const blockBonus = Math.round(shieldBlock * runeMultiplier);
-            totalArmor.block += shieldBlock + blockBonus;
-        }
-
-        return totalArmor;
-    }
-
-    // Метод для применения активных аур талантов
-    applyTalentAuras(totalStats) {
-        const stats = { ...totalStats };
+        const flatBonuses = {};
+        const percentBonuses = {};
         
-        Object.keys(this.talentAuras).forEach(statKey => {
-            const value = this.talentAuras[statKey];
+        // Проходим по всем слотам с экипировкой
+        Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
+            if (!equipment || !equipment.stats) return;
             
-            if (statKey.endsWith('_percent')) {
-                const baseStatKey = statKey.replace('_percent', '');
-                if (stats[baseStatKey] !== undefined) {
-                    const bonus = Math.round(stats[baseStatKey] * (value / 100));
-                    stats[baseStatKey] += bonus;
-                }
-            } else {
-                if (stats[statKey] !== undefined) {
-                    stats[statKey] += value;
-                } else {
-                    stats[statKey] = value;
-                }
-            }
-        });
-        
-        return stats;
-    }
-
-    // Вспомогательные методы
-    addEquipmentStatsToTotal(totalStats) {
-        const stats = { ...totalStats };
-
-        // Инициализируем все возможные статы
-        const allStats = [
-            'attack_power', 'attack_speed', 'hit', 'crit', 'parry', 'dodge', 
-            'resist', 'block', 'armour', 'spell_armour', 'hp', 'mp', 
-            'hp_reg', 'mp_reg', 'crit_damage_resistance'
-        ];
-        
-        allStats.forEach(stat => {
-            if (stats[stat] === undefined) {
-                stats[stat] = 0.0;
-            }
-        });
-
-        // Суммируем статистики
-        Object.keys(this.equipmentStats).forEach(slotType => {
-            const slotStats = this.equipmentStats[slotType];
-            if (Array.isArray(slotStats)) {
-                slotStats.forEach(equipStats => {
-                    Object.keys(equipStats).forEach(statKey => {
-                        const normalizedKey = this.normalizeStatKey(statKey);
-                        const value = parseFloat(equipStats[statKey]) || 0;
-                        
-                        if (stats[normalizedKey] !== undefined) {
-                            stats[normalizedKey] += value;
-                        } else {
-                            stats[normalizedKey] = value;
-                        }
-                    });
+            // Получаем базовые значения для слота
+            const baseValues = this.getBaseValuesForSlot(slotType, equipment);
+            
+            // Объединяем базовые значения и статы из XML
+            const allStats = { ...baseValues };
+            
+            // Добавляем бонусные статы из XML
+            if (equipment.stats) {
+                Object.entries(equipment.stats).forEach(([stat, value]) => {
+                    allStats[stat] = (allStats[stat] || 0) + value;
                 });
             }
+            
+            // Получаем множитель рун
+            const runeLevel = parseInt(equipment.runeLevel || 0, 10);
+            const runeMultiplier = this.getRuneMultiplier(slotType, runeLevel);
+            
+            // Проверяем, является ли слот бижутерией
+            const jewelrySlots = window.runeCalculator?.jewelrySlots || 
+                ['neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
+            const isJewelry = jewelrySlots.includes(slotType);
+            
+            // Применяем руны к каждому стату
+            Object.entries(allStats).forEach(([stat, value]) => {
+                if (stat.includes('_percent')) {
+                    // Процентные статы
+                    const baseStat = stat.replace('_percent', '');
+                    percentBonuses[baseStat] = (percentBonuses[baseStat] || 0) + (value / 100);
+                } else {
+                    // Плоские статы
+                    let finalValue = value;
+                    
+                    // Применяем множитель рун для ВСЕХ типов слотов (включая бижутерию)
+                    if (runeMultiplier > 0) {
+                        // Для бижутерии используем специальную логику или общий множитель?
+                        if (isJewelry) {
+                            // Вариант 1: Используем специальные бонусы из armor_calculator
+                            if (window.armorCalculator?.jewelryRuneBonuses?.[runeLevel]) {
+                                const jewelryBonus = window.armorCalculator.jewelryRuneBonuses[runeLevel];
+                                
+                                // Для специальных статов (armour, spell_armour) используем специальные бонусы
+                                if (stat === 'armour' && jewelryBonus.armour) {
+                                    finalValue = value + jewelryBonus.armour;
+                                } else if (stat === 'spell_armour' && jewelryBonus.spell_armour) {
+                                    finalValue = value + jewelryBonus.spell_armour;
+                                } else {
+                                    // Для остальных статов используем общий множитель
+                                    const runeBonus = Math.round(value * runeMultiplier);
+                                    finalValue = value + runeBonus;
+                                }
+                            } else {
+                                // Если нет специальных бонусов, используем общий множитель
+                                const runeBonus = Math.round(value * runeMultiplier);
+                                finalValue = value + runeBonus;
+                            }
+                        } else {
+                            // Для обычной экипировки и оружия
+                            const runeBonus = Math.round(value * runeMultiplier);
+                            finalValue = value + runeBonus;
+                        }
+                        
+                        console.log(`🔧 Рунный расчет для ${slotType}.${stat}:`, {
+                            baseValue: value,
+                            runeMultiplier: runeMultiplier,
+                            runeBonus: finalValue - value,
+                            totalValue: finalValue,
+                            isJewelry: isJewelry
+                        });
+                    }
+                    
+                    flatBonuses[stat] = (flatBonuses[stat] || 0) + finalValue;
+                }
+            });
         });
-
-        return stats;
-    }
-
-    // Добавляем метод для очистки статистик слота
-    removeEquipmentStats(slotType) {
-        delete this.equipmentStats[slotType];
-        delete this.runeStats[slotType];
-        delete this.stoneStats[slotType];
-        if (this.stoneCalculator && this.stoneCalculator.removeStones) {
-            this.stoneCalculator.removeStones(slotType);
-        }
+        
+        const result = { flat: flatBonuses, percent: percentBonuses };
+        this.cache.equipment[cacheKey] = result;
+        return result;
     }
     
-    getBaseForPercentage() {
-        // Проверяем готовность
-        if (!this.isReady()) {
-            console.warn('Невозможно получить базовые значения: калькулятор не готов');
+    calculateStonesBonus() {
+        const cacheKey = `${this.currentClass}_${JSON.stringify(this.equipmentStats)}`;
+        
+        if (this.cache.stones[cacheKey]) {
+            return this.cache.stones[cacheKey];
+        }
+        
+        const flatBonuses = {};
+        const percentBonuses = {}; // Для процентных камней, если понадобятся отдельно
+
+        // Проходим по всем слотам с экипировкой
+        Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
+            if (!equipment || !equipment.stones || equipment.stones.length === 0) return;
+
+            // Получаем калькулятор камней
+            const stoneCalc = window.stoneCalculator;
+            if (!stoneCalc) return;
+
+            // Проходим по всем камням в слоте
+            equipment.stones.forEach(stone => {
+                const stoneId = stone.id;
+                const stoneLevel = stone.level;
+                const stoneData = stoneCalc.stoneBonuses[stoneId];
+
+                if (!stoneData) {
+                    console.warn(`Данные для камня ${stoneId} не найдены`);
+                    return;
+                }
+
+                // Получаем значение для данного уровня камня
+                const value = stoneData.values[stoneLevel - 1];
+                
+                if (stoneData.type === 'absolute') {
+                    // Для абсолютных камней добавляем как плоский бонус
+                    flatBonuses[stoneId] = (flatBonuses[stoneId] || 0) + value;
+                } else if (stoneData.type === 'percent') {
+                    // Для процентных камней пока просто логируем, они будут обработаны отдельно
+                    percentBonuses[stoneId] = (percentBonuses[stoneId] || 0) + value;
+                }
+            });
+        });
+
+        const result = { flat: flatBonuses, percent: percentBonuses };
+        this.cache.stones[cacheKey] = result;
+        return result;
+    }
+
+    // Расчет бонусов от талантов
+    calculateTalentsBonus() {
+        const className = this.currentClass;
+        const cacheKey = `${className}_${JSON.stringify(this.talentPoints[className])}_${JSON.stringify(this.selectedTalents[className])}`;
+        
+        if (this.cache.talents[cacheKey]) {
+            return this.cache.talents[cacheKey];
+        }
+        
+        const bonuses = {};
+        const talentPoints = this.talentPoints[className] || {};
+        const talentCalculator = window.talentCalculator;
+        
+        if (!talentCalculator) {
+            return bonuses;
+        }
+        
+        // Получаем конфигурацию талантов для класса
+        const classTalents = talentCalculator.talentBonuses[className];
+        if (!classTalents) {
+            return bonuses;
+        }
+        
+        // Для каждой ветки талантов
+        Object.entries(classTalents).forEach(([branchName, branchConfig]) => {
+            const points = talentPoints[branchName] || 0;
+            if (points === 0) return;
+            
+            const branchStats = branchConfig.stats;
+            
+            // Добавляем бонусы от ветки (умножаем на количество очков)
+            Object.entries(branchStats).forEach(([stat, percentPerPoint]) => {
+                // ВАЖНО: Таланты дают ПРОЦЕНТНЫЙ бонус
+                const totalPercent = (percentPerPoint * points) / 100;
+                bonuses[stat] = (bonuses[stat] || 0) + totalPercent;
+            });
+        });
+        
+        // Добавляем бонусы от аур талантов
+        Object.entries(this.talentAuras).forEach(([stat, value]) => {
+            if (stat.includes('_percent')) {
+                // Процентные ауры
+                const baseStat = stat.replace('_percent', '');
+                bonuses[baseStat] = (bonuses[baseStat] || 0) + (value / 100);
+            } else {
+                // Плоские ауры - они будут добавлены отдельно
+                bonuses[`flat_${stat}`] = (bonuses[`flat_${stat}`] || 0) + value;
+            }
+        });
+        
+        this.cache.talents[cacheKey] = bonuses;
+        return bonuses;
+    }
+    
+    // Расчет бонусов от эликсиров
+    calculateElixirsBonus() {
+        const cacheKey = `${this.elixirStats.offensive}_${this.elixirStats.defensive}`;
+        
+        if (this.cache.elixirs[cacheKey]) {
+            return this.cache.elixirs[cacheKey];
+        }
+        
+        const bonuses = {};
+        const elixirCalculator = window.elixirCalculator;
+        
+        if (!elixirCalculator) {
+            return bonuses;
+        }
+        
+        // Получаем бонусы от атакующего эликсира
+        const offensiveElixir = elixirCalculator.elixirBonuses[this.elixirStats.offensive];
+        if (offensiveElixir && offensiveElixir.stats) {
+            Object.entries(offensiveElixir.stats).forEach(([stat, percent]) => {
+                bonuses[stat] = (bonuses[stat] || 0) + (percent / 100);
+            });
+        }
+        
+        // Получаем бонусы от защитного эликсира
+        const defensiveElixir = elixirCalculator.elixirBonuses[this.elixirStats.defensive];
+        if (defensiveElixir && defensiveElixir.stats) {
+            Object.entries(defensiveElixir.stats).forEach(([stat, percent]) => {
+                bonuses[stat] = (bonuses[stat] || 0) + (percent / 100);
+            });
+        }
+        
+        this.cache.elixirs[cacheKey] = bonuses;
+        return bonuses;
+    }
+    
+    // Расчет бонусов от гильдбаффа
+    calculateGuildBuffBonus() {
+        if (!this.guildBuff) {
             return {};
         }
         
-        // Начинаем с базовых статов класса
-        const base = { ...this.baseStats[this.currentClass] };
+        if (this.cache.guild.enabled) {
+            return this.cache.guild.bonuses;
+        }
         
-        // Добавляем базовую броню от экипировки
-        const baseArmor = this.calculateBaseArmorFromAllEquipment();
-        base.armour = (base.armour || 0) + (baseArmor.armour || 0);
-        base.spell_armour = (base.spell_armour || 0) + (baseArmor.spell_armour || 0);
-        base.block = (base.block || 0) + (baseArmor.block || 0);
+        const bonuses = {
+            all_stats: 0.03,  // +3% ко всем характеристикам
+            hp: 0.05,         // +5% к здоровью
+            crit_damage_resistance: 0.05  // +5% к сопротивлению крит. урону
+        };
         
-        // Добавляем бонусные статы от экипировки
-        Object.keys(this.equipmentStats).forEach(slotType => {
-            this.equipmentStats[slotType].forEach(equipStats => {
-                Object.keys(equipStats).forEach(statKey => {
-                    const normalizedKey = this.normalizeStatKey(statKey);
-                    const value = parseFloat(equipStats[statKey]) || 0;
-                    
-                    if (base[normalizedKey] !== undefined) {
-                        base[normalizedKey] += value;
-                    } else {
-                        base[normalizedKey] = value;
-                    }
-                });
-            });
+        this.cache.guild = {
+            enabled: true,
+            bonuses: bonuses
+        };
+        
+        return bonuses;
+    }
+    
+    // Расчет итоговых статистик
+    calculateTotalStats() {
+        const cacheKey = `${this.currentClass}_${this.guildBuff}_${JSON.stringify(this.elixirStats)}_${JSON.stringify(this.talentPoints[this.currentClass])}_${JSON.stringify(this.equipmentStats)}`;
+        
+        if (this.cache.total[cacheKey]) {
+            return this.cache.total[cacheKey];
+        }
+        
+        // Получаем базовые статы
+        const baseStats = this.getBaseStats();
+        
+        // Получаем бонусы от экипировки (с учетом рун)
+        const equipmentBonuses = this.calculateEquipmentBonuses();
+        
+        // Получаем бонусы от камней (только абсолютные)
+        const stonesBonuses = this.calculateStonesBonus();
+        
+        // Получаем бонусы от талантов
+        const talentsBonuses = this.calculateTalentsBonus();
+        
+        // Получаем бонусы от эликсиров
+        const elixirsBonuses = this.calculateElixirsBonus();
+        
+        // Получаем бонусы от гильдбаффа
+        const guildBonuses = this.calculateGuildBuffBonus();
+        
+        // ИСПРАВЛЕНИЕ: Правильный порядок расчета
+        // 1. Начинаем с базовых значений
+        let result = { ...baseStats };
+        
+        // 2. СОХРАНЯЕМ ОТДЕЛЬНО ЗНАЧЕНИЯ, КОТОРЫЕ НЕ ДОЛЖНЫ ПОПАДАТЬ ПОД ПРОЦЕНТЫ
+        //    Это значения от АБСОЛЮТНЫХ камней
+        const nonScalableValues = { ...stonesBonuses.flat };
+        
+        // 3. Добавляем плоские бонусы от экипировки (ЭТО ЭКИПИРОВКА)
+        Object.entries(equipmentBonuses.flat).forEach(([stat, value]) => {
+            if (result[stat] !== undefined) {
+                result[stat] += value;
+            } else {
+                result[stat] = value;
+            }
+        });
+        
+        // 4. Добавляем плоские бонусы от талантов (ауры)
+        Object.entries(talentsBonuses).forEach(([stat, value]) => {
+            if (stat.startsWith('flat_')) {
+                const baseStat = stat.replace('flat_', '');
+                if (result[baseStat] !== undefined) {
+                    result[baseStat] += value;
+                }
+            }
+        });
+        
+        // 5. ПРИМЕНЯЕМ ПРОЦЕНТНЫЕ БОНУСЫ К ТЕКУЩЕЙ СУММЕ (НО НЕ К ЗНАЧЕНИЯМ ОТ КАМНЕЙ)
+        // Собираем все процентные бонусы
+        const percentBonuses = { ...talentsBonuses };
+        
+        // Удаляем плоские бонусы из percentBonuses
+        Object.keys(percentBonuses).forEach(key => {
+            if (key.startsWith('flat_')) {
+                delete percentBonuses[key];
+            }
+        });
+        
+        // Добавляем процентные бонусы от эликсиров
+        Object.entries(elixirsBonuses).forEach(([stat, value]) => {
+            percentBonuses[stat] = (percentBonuses[stat] || 0) + value;
+        });
+        
+        // Добавляем процентные бонусы от экипировки
+        Object.entries(equipmentBonuses.percent).forEach(([stat, value]) => {
+            percentBonuses[stat] = (percentBonuses[stat] || 0) + value;
         });
 
-        // Убедимся, что все основные статы присутствуют
-        const requiredStats = [
-            'attack_power', 'attack_speed', 'hit', 'crit', 'parry', 'dodge',
-            'resist', 'block', 'spell_armour', 'armour', 'mp_reg', 'hp_reg',
-            'mp', 'hp', 'crit_damage_resistance'
-        ];
+        // Добавляем специальные бонусы гильдбаффа
+        if (guildBonuses.hp && result.hp !== undefined) {
+            percentBonuses.hp = (percentBonuses.hp || 0) + guildBonuses.hp - (guildBonuses.all_stats || 0);
+        }
         
-        requiredStats.forEach(stat => {
-            if (base[stat] === undefined) {
-                base[stat] = 0;
+        if (guildBonuses.crit_damage_resistance && result.crit_damage_resistance !== undefined) {
+            percentBonuses.crit_damage_resistance = (percentBonuses.crit_damage_resistance || 0) + 
+                guildBonuses.crit_damage_resistance - (guildBonuses.all_stats || 0);
+        }
+        
+        // ВАЖНО: Сначала применяем процентные бонусы к scalabledValue (база + экипировка + таланты)
+        // Затем добавляем non-scalable значения (камни) уже после процентов
+        Object.entries(percentBonuses).forEach(([stat, percent]) => {
+            if (result[stat] !== undefined && percent !== 0) {
+                // Пропускаем гильдбафф (он будет применен отдельно)
+                if (stat === 'all_stats') return;
+                const bonus = Math.floor(result[stat] * percent);
+                result[stat] += bonus;
             }
         });
 
-        return base;
-    }
-
-    normalizeStatKey(key) {
-        const mapping = {
-            'Сила атаки': 'attack_power',
-            'Скорость атаки': 'attack_speed',
-            'Точность': 'hit',
-            'Шанс крита. урона': 'crit',
-            'Парирование': 'parry',
-            'Уклонения': 'dodge',
-            'Сопр.маг': 'resist',
-            'Блок': 'block',
-            'Маг. броня': 'spell_armour',
-            'Физ. броня': 'armour',
-            'Восст. Энергии': 'mp_reg',
-            'Восст. Здоровья': 'hp_reg',
-            'Энергия': 'mp',
-            'Здоровье': 'hp',
-            'Сопр.крит': 'crit_damage_resistance',
-            
-            'armour': 'armour',
-            'spell_armour': 'spell_armour',
-            'block': 'block',
-            'hp': 'hp',
-            'mp': 'mp',
-            'attack_power': 'attack_power',
-            'attack_speed': 'attack_speed',
-            'hit': 'hit',
-            'crit': 'crit',
-            'parry': 'parry',
-            'dodge': 'dodge',
-            'resist': 'resist',
-            'hp_reg': 'hp_reg',
-            'mp_reg': 'mp_reg',
-            'crit_damage_resistance': 'crit_damage_resistance'
-        };
-        return mapping[key] || key;
-    }
-
-    // Сброс всех статистик
-    reset() {
-        this.equipmentStats = {};
-        this.runeStats = {};
-        this.stoneStats = {};
-        this.talentStats = {};
-        this.elixirStats = {};
-        this.guildBuff = false;
-        
-        if (this.stoneCalculator && this.stoneCalculator.reset) {
-            this.stoneCalculator.reset();
-        }
-        if (this.runeCalculator && this.runeCalculator.reset) {
-            this.runeCalculator.reset();
-        }
-        if (this.elixirCalculator && this.elixirCalculator.reset) {
-            this.elixirCalculator.reset();
-        }
-
-        if (this.currentClass && this.talentPoints[this.currentClass]) {
-            Object.keys(this.talentPoints[this.currentClass]).forEach(branch => {
-                this.talentPoints[this.currentClass][branch] = 0;
+        // 6. Применяем гильдбафф отдельно (как мультипликативный бонус)
+        if (guildBonuses.all_stats) {
+            Object.keys(result).forEach(stat => {
+                if (typeof result[stat] === 'number') {
+                    const guildBonus = Math.floor(result[stat] * guildBonuses.all_stats);
+                    result[stat] += guildBonus;
+                }
             });
         }
-    }
+        
+        // 7. ТЕПЕРЬ добавляем значения от АБСОЛЮТНЫХ КАМНЕЙ (они не должны были умножаться на проценты)
+        Object.entries(nonScalableValues).forEach(([stat, value]) => {
+            if (result[stat] !== undefined) {
+                result[stat] += value;
+            } else {
+                result[stat] = value;
+            }
+        });
+        
+        // 8. Применяем бонусы от ПРОЦЕНТНЫХ камней (для оружия)
+        // Процентные камни должны применяться к итоговому значению ПОСЛЕ добавления абсолютных камней
+        Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
+            if (!equipment || !equipment.stones || equipment.stones.length === 0) return;
 
-    // Получение детальной информации
-    getBonusBreakdown() {
-        return {
-            baseStats: this.getBaseStats(),
-            equipmentBonus: this.calculateEquipmentTotal(),
-            stoneBonus: this.stoneCalculator.calculateStoneTotal ? this.stoneCalculator.calculateStoneTotal() : {},
-            runeBonus: this.runeCalculator.getRuneBonuses ? this.runeCalculator.getRuneBonuses() : {},
-            elixirBonus: this.elixirCalculator.getElixirBonuses ? this.elixirCalculator.getElixirBonuses() : {},
-            guildBuff: this.guildBuff
-        };
-    }
+            const stoneCalc = window.stoneCalculator;
+            if (!stoneCalc) return;
 
-    calculateEquipmentTotal() {
-        const total = {};
-        Object.values(this.equipmentStats).forEach(slotStats => {
-            slotStats.forEach(equipStats => {
-                Object.keys(equipStats).forEach(statKey => {
-                    const normalizedKey = this.normalizeStatKey(statKey);
-                    if (total[normalizedKey] !== undefined) {
-                        total[normalizedKey] += equipStats[statKey];
-                    } else {
-                        total[normalizedKey] = equipStats[statKey];
+            equipment.stones.forEach(stone => {
+                const stoneId = stone.id;
+                const stoneLevel = stone.level;
+                const stoneData = stoneCalc.stoneBonuses[stoneId];
+
+                if (stoneData && stoneData.type === 'percent' && stoneData.values) {
+                    const percentValue = stoneData.values[stoneLevel - 1] / 100;
+                    
+                    // Применяем процент к соответствующей характеристике
+                    // Камень `hp_percent` применяется к `hp`
+                    const targetStat = stoneId.replace('_percent', '');
+                    
+                    if (result[targetStat] !== undefined) {
+                        const bonus = Math.floor(result[targetStat] * percentValue);
+                        result[targetStat] += bonus;
                     }
-                });
+                }
             });
         });
-        return total;
+        
+        // Округляем все значения вниз
+        Object.keys(result).forEach(stat => {
+            if (typeof result[stat] === 'number') {
+                result[stat] = Math.floor(result[stat]);
+            }
+        });
+        
+        this.cache.total[cacheKey] = result;
+        return result;
     }
-
     
-
+    // Получение детальной разбивки статистики
+    getStatBreakdown(statName) {
+        const baseStats = this.getBaseStats();
+        const baseValue = baseStats[statName] || 0;
+        
+        const breakdown = {
+            base: baseValue,
+            equipment: 0,
+            stones: 0,        // Значения от камней (не масштабируемые)
+            talents: 0,
+            elixirs: 0,
+            guild: 0,
+            total: baseValue
+        };
+        
+        // Получаем все бонусы
+        const equipmentBonuses = this.calculateEquipmentBonuses();
+        const stonesBonuses = this.calculateStonesBonus();
+        const talentsBonuses = this.calculateTalentsBonus();
+        const elixirsBonuses = this.calculateElixirsBonus();
+        const guildBonuses = this.calculateGuildBuffBonus();
+        
+        // 1. БАЗА + ЭКИПИРОВКА + ТАЛАНТЫ (плоские)
+        let scalableValue = baseValue;
+        
+        // Добавляем плоские бонусы от экипировки
+        if (equipmentBonuses.flat[statName]) {
+            breakdown.equipment += equipmentBonuses.flat[statName];
+            scalableValue += equipmentBonuses.flat[statName];
+        }
+        
+        // Добавляем плоские бонусы от талантов
+        if (talentsBonuses[`flat_${statName}`]) {
+            breakdown.talents += talentsBonuses[`flat_${statName}`];
+            scalableValue += talentsBonuses[`flat_${statName}`];
+        }
+        
+        // 2. ПРИМЕНЯЕМ ПРОЦЕНТНЫЕ БОНУСЫ К scalableValue
+        let totalPercent = 0;
+        
+        // Процентные бонусы от талантов
+        if (talentsBonuses[statName]) {
+            totalPercent += talentsBonuses[statName];
+        }
+        
+        // Процентные бонусы от эликсиров
+        if (elixirsBonuses[statName]) {
+            totalPercent += elixirsBonuses[statName];
+        }
+        
+        // Процентные бонусы от экипировки
+        if (equipmentBonuses.percent[statName]) {
+            totalPercent += equipmentBonuses.percent[statName];
+        }
+        
+        // Процентные бонусы от гильдбаффа
+        if (guildBonuses.all_stats) {
+            totalPercent += guildBonuses.all_stats;
+        }
+        
+        // Специальные бонусы гильдбаффа
+        if (statName === 'hp' && guildBonuses.hp) {
+            totalPercent += guildBonuses.hp - (guildBonuses.all_stats || 0);
+        }
+        
+        if (statName === 'crit_damage_resistance' && guildBonuses.crit_damage_resistance) {
+            totalPercent += guildBonuses.crit_damage_resistance - (guildBonuses.all_stats || 0);
+        }
+        
+        // Применяем проценты
+        let percentBonus = 0;
+        if (totalPercent > 0) {
+            percentBonus = Math.floor(scalableValue * totalPercent);
+            breakdown.guild += percentBonus; // Пока так
+            scalableValue += percentBonus;
+        }
+        
+        // 3. ТЕПЕРЬ ДОБАВЛЯЕМ ЗНАЧЕНИЯ ОТ АБСОЛЮТНЫХ КАМНЕЙ (они не масштабируются)
+        if (stonesBonuses.flat[statName]) {
+            breakdown.stones += stonesBonuses.flat[statName];
+        }
+        
+        // 4. ИТОГ: scalableValue (с процентами) + абсолютные камни
+        breakdown.total = Math.floor(scalableValue + (stonesBonuses.flat[statName] || 0));
+        
+        // 5. Учитываем процентные камни (оружие) - это сложно для разбивки, но итоговая сумма корректна
+        
+        return breakdown;
+    }
+    
+    // Установка экипировки в слот
+    setEquipment(slotType, equipmentData) {
+        this.equipmentStats[slotType] = equipmentData;
+        this.clearCache();
+        
+        console.log(`✅ Экипировка установлена в слот ${slotType}:`, equipmentData);
+        
+        // Обновляем отображение
+        if (typeof window.updateStatsDisplay === 'function') {
+            window.updateStatsDisplay();
+        }
+    }
+    
+    // Удаление экипировки из слота
+    removeEquipment(slotType) {
+        if (this.equipmentStats && this.equipmentStats[slotType]) {
+            delete this.equipmentStats[slotType];
+            this.clearCache();
+            
+            console.log(`❌ Экипировка удалена из слота ${slotType}`);
+            
+            // Обновляем отображение
+            if (typeof window.updateStatsDisplay === 'function') {
+                window.updateStatsDisplay();
+            }
+        }
+    }
+    
+    // Получение всех статов для отображения
+    getAllStats() {
+        return this.calculateTotalStats();
+    }
+    
+    // Экспорт данных
+    exportData() {
+        return {
+            currentClass: this.currentClass,
+            talentPoints: this.talentPoints[this.currentClass],
+            selectedTalents: this.selectedTalents[this.currentClass],
+            elixirStats: this.elixirStats,
+            guildBuff: this.guildBuff,
+            equipmentStats: this.equipmentStats,
+            stats: this.calculateTotalStats()
+        };
+    }
+    
+    updateStats() {
+        this.clearCache();
+        
+        // Обновляем отображение если функция доступна
+        if (typeof window.updateStatsDisplay === 'function') {
+            window.updateStatsDisplay();
+        }
+        
+        return this.calculateTotalStats();
+    }
 }
 
-// Создаем глобальный экземпляр калькулятора
+// Создаем глобальный экземпляр
 window.statCalculator = new StatCalculator();
+
+// Функция для обновления отображения статистик на странице
+function updateStatsDisplay(stats) {
+    if (!stats) {
+        stats = window.statCalculator.getAllStats();
+    }
+    
+    // Обновляем все поля статистик
+    const statElements = {
+        'attack_power': 'attack_power',
+        'attack_speed': 'attack_speed',
+        'hit': 'hit',
+        'crit': 'crit',
+        'parry': 'parry',
+        'dodge': 'dodge',
+        'resist': 'resist',
+        'block': 'block',
+        'spell_armour': 'spell_armour',
+        'armour': 'armour',
+        'mp_reg': 'mp_reg',
+        'hp_reg': 'hp_reg',
+        'mp': 'mp',
+        'hp': 'hp',
+        'crit_damage_resistance': 'crit_damage_resistance',
+        'speed': 'speed'
+    };
+    
+    Object.entries(statElements).forEach(([stat, elementId]) => {
+        const element = document.getElementById(elementId);
+        if (element && stats[stat] !== undefined) {
+            element.textContent = stats[stat];
+        }
+    });
+    
+    console.log('Статистики обновлены:', stats);
+}
+
+// Делаем функцию глобальной
+window.updateStatsDisplay = updateStatsDisplay;
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики для эликсиров
+    const offensiveRadios = document.querySelectorAll('input[name="offensive-elixir"]');
+    const defensiveRadios = document.querySelectorAll('input[name="defensive-elixir"]');
+    const guildBuffCheckbox = document.getElementById('guild-buff');
+    
+    if (offensiveRadios.length) {
+        offensiveRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    window.statCalculator.setElixirs(this.value, 
+                        document.querySelector('input[name="defensive-elixir"]:checked')?.value || 'none');
+                    updateStatsDisplay();
+                }
+            });
+        });
+    }
+    
+    if (defensiveRadios.length) {
+        defensiveRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    window.statCalculator.setElixirs(
+                        document.querySelector('input[name="offensive-elixir"]:checked')?.value || 'none',
+                        this.value
+                    );
+                    updateStatsDisplay();
+                }
+            });
+        });
+    }
+    
+    if (guildBuffCheckbox) {
+        guildBuffCheckbox.addEventListener('change', function() {
+            window.statCalculator.setGuildBuff(this.checked);
+            updateStatsDisplay();
+        });
+    }
+    
+    // Обработчики для кнопок классов
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const className = this.getAttribute('data-class');
+            if (className && className !== 'reset') {
+                window.statCalculator.setClass(className);
+                updateStatsDisplay();
+            }
+        });
+    });
+    
+    // Первоначальное обновление
+    setTimeout(() => {
+        updateStatsDisplay();
+    }, 100);
+});

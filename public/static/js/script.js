@@ -131,36 +131,39 @@ document.addEventListener('DOMContentLoaded', function() {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     };
 
-    // Инициализация базовых статистик
-    function initializeBaseStats() {
-        if (window.characterStats && window.statCalculator) {
-            const baseStats = window.characterStats[currentClass];
-            
-            if (baseStats) {
-                window.statCalculator.setBaseStats(currentClass, baseStats);
-                const totalStats = window.statCalculator.calculateTotalStats();
-                window.updateStatsDisplay(totalStats);
-            } else {
-                console.error('Базовые статистики не найдены для класса:', currentClass);
-            }
-        } else {
-            console.error('characterStats или statCalculator не доступны');
-        }
-    }
-
-    // Функция загрузки статистик класса
+    // ИСПРАВЛЕНО: Функция загрузки статистик класса
     function loadClassStats(characterClass) {
-        const stats = window.characterStats && window.characterStats[characterClass];
-        
-        if (stats && window.statCalculator) {
-            window.statCalculator.setBaseStats(characterClass, stats);
+        if (window.statCalculator) {
+            // Используем setClass вместо setBaseStats
+            window.statCalculator.setClass(characterClass);
             const totalStats = window.statCalculator.calculateTotalStats();
             updateStatsDisplay(totalStats);
+        } else {
+            console.error('statCalculator не доступен');
         }
     }
 
     // Функция обновления отображения статистик
     window.updateStatsDisplay = function(stats) {
+        // ИСПРАВЛЕНО: Получаем статистики, если они не переданы
+        if (!stats || typeof stats !== 'object') {
+            // Если stats не передан или некорректный, получаем актуальные статистики
+            if (window.statCalculator && typeof window.statCalculator.getAllStats === 'function') {
+                stats = window.statCalculator.getAllStats();
+            } else if (window.statCalculator && typeof window.statCalculator.calculateTotalStats === 'function') {
+                stats = window.statCalculator.calculateTotalStats();
+            } else {
+                console.error('updateStatsDisplay: не удалось получить статистики');
+                return;
+            }
+        }
+        
+        // Проверяем, что stats теперь корректен
+        if (!stats || typeof stats !== 'object') {
+            console.error('updateStatsDisplay: stats is null or not an object', stats);
+            return;
+        }
+        
         const statMapping = {
             'attack_power': 'attack_power',
             'attack_speed': 'attack_speed', 
@@ -189,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-    }
+    };
 
     // Функция сброса всей экипировки
     function resetAllEquipment() {
@@ -198,73 +201,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (window.statCalculator) {
-            window.statCalculator.equipmentStats = {};
-            window.statCalculator.runeStats = {};
-            window.statCalculator.stoneStats = {};
-            if (window.statCalculator.stoneCalculator) {
-                window.statCalculator.stoneCalculator.reset();
-            }
-            if (window.statCalculator.runeCalculator) {
-                window.statCalculator.runeCalculator.reset();
-            }
+            window.statCalculator.equipmentBonuses = {};
+            window.statCalculator.clearCache();
         }
         
         document.querySelectorAll('.equipment-slot').forEach(slot => {
             const slotType = slot.getAttribute('data-slot');
-            slot.innerHTML = `
-                <img src="/static/Ico/Button_Char/${getSlotIconName(slotType)}.svg" alt="${slotType}">
-                <span>${getSlotName(slotType)}</span>
-            `;
+            // Используем функции из EquipmentIcons
+            if (window.EquipmentIcons) {
+                slot.innerHTML = `
+                    <img src="/static/Ico/Button_Char/${window.EquipmentIcons.getSlotIcon(slotType)}" alt="${slotType}">
+                    <span>${window.EquipmentIcons.getSlotName(slotType)}</span>
+                `;
+            }
             slot.classList.remove('equipped');
         });
         
         updateLeftHandState();
-    }
-
-    // Вспомогательная функция для получения названий слотов
-    function getSlotName(slotType) {
-        const slotNames = {
-            'helm': 'Голова',
-            'shoulders': 'Плечи',
-            'chest': 'Роба',
-            'ring1': 'Кольцо 1',
-            'trinket1': 'Амулет 1',
-            'neck': 'Ожерелье',
-            'pants': 'Штаны',
-            'rhand': 'Оружие',
-            'trinket2': 'Амулет 2',
-            'hands': 'Перчатки',
-            'boots': 'Сапоги',
-            'lhand': 'Щит',
-            'cape': 'Плащ',
-            'bracers': 'Наручи',
-            'belt': 'Пояс',
-            'ring2': 'Кольцо 2'
-        };
-        return slotNames[slotType] || slotType;
-    }
-
-    // Вспомогательная функция для получения имен иконок
-    function getSlotIconName(slotType) {
-        const iconMapping = {
-            'helm': '01_Helm',
-            'shoulders': '02_shoulders',
-            'chest': '04_Chest',
-            'ring1': '08_Ring1',
-            'trinket1': '06_Trinket1',
-            'neck': '09_Neck',
-            'pants': '16_Pants',
-            'rhand': '07_Rhand',
-            'trinket2': '18_Trinket2',
-            'hands': '14_Hands',
-            'boots': '17_Boots',
-            'lhand': '11_Lhand',
-            'cape': '03_Cape',
-            'bracers': '13_Bracers',
-            'belt': '15_Belt',
-            'ring2': '12_Ring2'
-        };
-        return iconMapping[slotType] || slotType;
     }
 
     // Функция обновления всех статистик
@@ -272,50 +225,45 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!window.statCalculator) return;
         
         const totalStats = window.statCalculator.calculateTotalStats();
-        const totalArmor = window.statCalculator.calculateTotalArmor();
         
-        const finalStats = {
-            ...totalStats,
-            armour: totalArmor.armour || 0,
-            spell_armour: totalArmor.spell_armour || 0,
-            block: totalArmor.block || 0
-        };
-        
-        window.updateStatsDisplay(finalStats);
+        window.updateStatsDisplay(totalStats);
     }
 
     // Обработчик гильдейского баффа
-    document.getElementById('guild-buff').addEventListener('change', function() {
-        if (window.statCalculator) {
-            window.statCalculator.setGuildBuff(this.checked);
-            // Принудительно обновляем статистики
-            setTimeout(() => {
-                window.statCalculator.updateStats();
-            }, 100);
-        }
-    });
+    const guildBuffElement = document.getElementById('guild-buff');
+    if (guildBuffElement) {
+        guildBuffElement.addEventListener('change', function() {
+            if (window.statCalculator) {
+                window.statCalculator.setGuildBuff(this.checked);
+                setTimeout(() => {
+                    updateAllStats();
+                }, 100);
+            }
+        });
+    }
 
     // Обработчики эликсиров
     document.querySelectorAll('input[name="offensive-elixir"], input[name="defensive-elixir"]').forEach(input => {
         input.addEventListener('change', function() {
             if (!window.statCalculator) return;
             
-            const offensiveElixir = document.querySelector('input[name="offensive-elixir"]:checked').value;
-            const defensiveElixir = document.querySelector('input[name="defensive-elixir"]:checked').value;
+            const offensiveElixir = document.querySelector('input[name="offensive-elixir"]:checked');
+            const defensiveElixir = document.querySelector('input[name="defensive-elixir"]:checked');
             
-            window.statCalculator.setElixirs(offensiveElixir, defensiveElixir);
-            updateAllStats();
+            if (offensiveElixir && defensiveElixir) {
+                window.statCalculator.setElixirs(offensiveElixir.value, defensiveElixir.value);
+                updateAllStats();
+            }
         });
     });
 
     // Обработчик для чекбокса талантов
-    document.getElementById('talent-buff').addEventListener('change', function() {
-        if (window.talentCalculator && window.applyTalents) {
-            window.applyTalents();
-        } else {
+    const talentBuffElement = document.getElementById('talent-buff');
+    if (talentBuffElement) {
+        talentBuffElement.addEventListener('change', function() {
             updateAllStats();
-        }
-    });
+        });
+    }
 
     // Вспомогательная функция для обновления состояния левой руки
     function updateLeftHandState() {
@@ -349,7 +297,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 500);
                 }
                 
-                window.localStorageManager.setupAutoSave();
+                if (window.localStorageManager.setupAutoSave) {
+                    window.localStorageManager.setupAutoSave();
+                }
             } else {
                 // Если localStorageManager не доступен, используем воина по умолчанию
                 initializeWithDefaultClass(defaultClass);
@@ -357,9 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Обновляем статистики через 1 секунду после загрузки
             setTimeout(() => {
-                if (window.statCalculator) {
-                    window.statCalculator.updateStats();
-                }
+                updateAllStats();
             }, 1000);
             
         }, 100);
@@ -391,10 +339,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Обработчик кнопки сброса
-    document.querySelector('.reset-btn').addEventListener('click', function() {
-        if (confirm('Вы уверены, что хотите сбросить все данные?')) {
-            window.localStorageManager.clearAllData();
-            alert('Все данные сброшены!');
-        }
-    });
+    const resetBtn = document.querySelector('.reset-btn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите сбросить все данные?')) {
+                if (window.localStorageManager && window.localStorageManager.clearAllData) {
+                    window.localStorageManager.clearAllData();
+                }
+                alert('Все данные сброшены!');
+            }
+        });
+    }
 });
