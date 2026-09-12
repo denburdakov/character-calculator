@@ -86,7 +86,7 @@ app.get('/logout', (req, res) => {
 });
 
 // Fallback для всех остальных путей
-app.get('*', (req, res) => {
+app.get('/{*splat}', (req, res) => {
     if (!req.session.userId) {
         return res.redirect('/login.html');
     }
