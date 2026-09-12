@@ -417,3 +417,344 @@
         padding: 15px;
     }
 }
+
+/* Стили для кнопок выбора талантов */
+.talent-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+}
+
+.talent-select-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: var(--font-primary);
+}
+
+.select-btn {
+    background: var(--gradient-secondary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+.select-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.4);
+}
+
+.deselect-btn {
+    background: var(--gradient-accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+.deselect-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.talent-select-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.talent-lock {
+    font-size: 20px;
+    opacity: 0.5;
+}
+
+/* Информационная панель ветки */
+.branch-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.branch-info-content {
+    color: var(--light);
+    font-size: 0.95rem;
+}
+
+.branch-info-next {
+    color: var(--primary);
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid var(--primary);
+}
+
+.branch-info-complete {
+    color: var(--secondary);
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(46, 204, 113, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid var(--secondary);
+    font-weight: 600;
+}
+
+.branch-info-selected {
+    color: var(--secondary);
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(46, 204, 113, 0.05);
+    border-radius: 4px;
+}
+
+.branch-info-selected ul {
+    margin: 5px 0 0 20px;
+    padding: 0;
+}
+
+.branch-info-selected li {
+    color: var(--light);
+    margin: 3px 0;
+}
+
+/* Статус таланта */
+.talent-status {
+    font-weight: 700;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.talent-item.unlocked .talent-status {
+    color: var(--primary);
+}
+
+.talent-item.selected .talent-status {
+    color: var(--secondary);
+    animation: pulse 2s infinite;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .talent-item {
+        flex-wrap: wrap;
+    }
+    
+    .talent-actions {
+        order: 3;
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+    
+    .talent-select-btn {
+        width: 100%;
+        max-width: 120px;
+    }
+}
+
+/* Порог выбора умений */
+.talent-threshold {
+    margin-bottom: 18px;
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: var(--border-radius-sm);
+    border-left: 3px solid var(--primary);
+    transition: var(--transition);
+}
+
+.talent-threshold.locked {
+    opacity: 0.55;
+    border-left-color: var(--gray);
+}
+
+.talent-threshold.unlocked {
+    border-left-color: var(--secondary);
+    background: rgba(46, 204, 113, 0.06);
+}
+
+.talent-threshold-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--lighter);
+    font-size: 0.95rem;
+}
+
+.threshold-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.35);
+}
+
+.talent-threshold.unlocked .threshold-badge {
+    background: var(--gradient-secondary);
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.35);
+}
+
+/* 3 колонки для умений на пороге */
+.talent-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+/* Карточка умения внутри порога */
+.talent-threshold .talent-item {
+    flex-direction: column;
+    text-align: left;
+    gap: 10px;
+    padding: 14px;
+    border-width: 2px;
+}
+
+.talent-threshold .talent-item .talent-points-required {
+    align-self: flex-start;
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+}
+
+.talent-threshold .talent-item.selected {
+    border-color: var(--secondary);
+    background: rgba(46, 204, 113, 0.12);
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.25);
+}
+
+.talent-threshold .talent-item.blocked {
+    opacity: 0.35;
+    filter: grayscale(0.6);
+    pointer-events: none;
+}
+
+.talent-threshold .talent-item .talent-actions {
+    width: 100%;
+    margin-top: auto;
+}
+
+.talent-threshold .talent-item .talent-select-btn {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+}
+
+.talent-threshold .talent-item .talent-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1rem;
+    width: 26px;
+    height: 26px;
+}
+
+/* Адаптив */
+@media (max-width: 1024px) {
+    .talent-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .talent-options {
+        grid-template-columns: 1fr;
+    }
+    .talent-threshold {
+        padding: 10px;
+    }
+}
+
+/* ============================================================
+   TALENT TOOLTIP — всплывающая подсказка для талантов
+   ============================================================ */
+.talent-tooltip {
+    position: fixed;
+    max-width: 340px;
+    background: linear-gradient(180deg, rgba(12, 18, 30, 0.98), rgba(8, 12, 22, 0.98));
+    border: 1px solid rgba(30, 136, 229, 0.7);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #e0e0e0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    font-family: var(--font-primary, system-ui, sans-serif);
+    box-sizing: border-box;
+}
+
+.talent-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.talent-tooltip-title {
+    color: #ffd700;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.talent-tooltip-desc {
+    color: #cfd6e0;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    word-wrap: break-word;
+}
+
+/* Компактная карточка таланта без описания */
+.talent-threshold .talent-item {
+    min-height: 70px;
+}
+
+.talent-threshold .talent-item .talent-info h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+/* Индикатор, что можно навести */
+.talent-threshold .talent-item {
+    cursor: help;
+}
+
+.talent-threshold .talent-item .talent-select-btn,
+.talent-threshold .talent-item .talent-lock {
+    cursor: pointer;
+}
+
+/* На маленьких экранах тултип скрывается, описание встраивается обратно */
+@media (max-width: 640px) {
+    .talent-tooltip {
+        display: none !important;
+    }
+}

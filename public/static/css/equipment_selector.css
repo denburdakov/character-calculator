@@ -1,4 +1,3 @@
-/* equipment_selector.css - исправленный */
 /* ===== ОСНОВНЫЕ СТИЛИ МОДАЛЬНОГО ОКНА ===== */
 #equipment-modal {
     position: fixed;
@@ -998,4 +997,382 @@
     color: var(--gray);
     margin-top: 5px;
     text-align: center;
+}
+
+/* Кнопка удаления экипировки */
+.remove-equipment-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    border: 2px solid white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.remove-equipment-btn:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.remove-equipment-btn:active {
+    transform: scale(0.95);
+}
+
+/* Слот с экипировкой при наведении */
+.equipment-slot.equipped:hover .remove-equipment-btn {
+    display: flex;
+}
+
+/* Анимация для модального окна подтверждения */
+@keyframes confirmAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Стили для кнопок подтверждения */
+.confirm-remove-btn:hover {
+    background: #c0392b !important;
+    transform: translateY(-2px);
+}
+
+.cancel-remove-btn:hover {
+    background: #7f8c8d !important;
+    transform: translateY(-2px);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .remove-equipment-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        top: -3px;
+        right: -3px;
+    }
+    
+    .remove-confirm-modal > div {
+        margin: 20px;
+        padding: 20px !important;
+    }
+}
+
+/* ===== Селектор характеристик (в стиле камней/рун) ===== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.stat-option {
+    background: linear-gradient(135deg, #f8f9fa 0%, #eef1f4 100%);
+    border: 2px solid #d8dde3;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+}
+
+/* Категорийные оттенки (как у камней) */
+.stat-option.stat-cat-offensive { background: linear-gradient(135deg, #fff5f5 0%, #ffe9e0 100%); }
+.stat-option.stat-cat-defensive { background: linear-gradient(135deg, #f0f7ff 0%, #e3eefc 100%); }
+.stat-option.stat-cat-resource  { background: linear-gradient(135deg, #f2fff5 0%, #e3f7e8 100%); }
+
+.stat-option:hover {
+    border-color: #4CAF50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.stat-option.selected {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    box-shadow: 0 4px 14px rgba(33, 150, 243, 0.28);
+}
+
+.stat-option-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.stat-option-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    flex: 1;
+    font-weight: 700;
+}
+
+.stat-icon { font-size: 1.15rem; }
+
+.stat-counter {
+    background: #b0b8c1;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.stat-option.selected .stat-counter { background: #2196F3; }
+
+.stat-average {
+    font-size: 0.78rem;
+    color: #555;
+    margin: 0 0 6px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: baseline;
+    line-height: 1.3;
+}
+
+.stat-average .avg-label  { color: #856404; font-weight: 600; }
+.stat-average .avg-value  { color: #d97706; font-weight: 800; font-size: 0.9rem; }
+.stat-average .avg-range  { font-style: italic; color: #7a8794; }
+.stat-average .avg-samples{ color: #a0a8b0; font-size: 0.7rem; }
+.stat-average .no-data    { color: #b0b8c1; font-style: italic; }
+
+.stat-value-input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 2px solid #d8dde3;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-align: center;
+    background: white;
+    color: #2196F3;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    /* Убираем стрелки числового поля */
+    appearance: textfield;
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.stat-value-input::-webkit-outer-spin-button,
+.stat-value-input::-webkit-inner-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stat-value-input:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+}
+
+.input-unit {
+    font-size: 0.8rem;
+    color: #7a8794;
+    font-weight: 700;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Панель выбранных */
+#selected-stats {
+    margin: 15px 0;
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e0e4e8;
+}
+
+#selected-stats h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+#stats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    min-height: 34px;
+    align-items: center;
+    color: #a0a8b0;
+    font-style: italic;
+}
+
+.selected-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px 5px 10px;
+    background: white;
+    border: 1px solid #d0d6dc;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    animation: popIn 0.2s ease-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.selected-stat-item .item-icon  { font-size: 0.95rem; }
+.selected-stat-item .item-name  { color: #2c3e50; font-weight: 600; }
+.selected-stat-item .item-value { color: #2196F3; font-weight: 800; }
+
+.remove-stat-btn {
+    background: #fde8e8;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.remove-stat-btn:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+#reset-stats {
+    font-size: 0.85rem;
+    padding: 6px 14px;
+}
+
+/* Скроллбар */
+.stats-grid::-webkit-scrollbar       { width: 8px; }
+.stats-grid::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+.stats-grid::-webkit-scrollbar-thumb { background: #b8c0c8; border-radius: 4px; }
+.stats-grid::-webkit-scrollbar-thumb:hover { background: #8892a0; }
+
+/* ===== Контейнер экземпляров внутри карточки ===== */
+.instances-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.instance-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 5px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    animation: slideDown 0.2s ease-out;
+}
+
+.instance-index {
+    font-size: 0.7rem;
+    color: #7a8794;
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+    background: #eef1f4;
+    border-radius: 6px;
+    padding: 2px 4px;
+}
+
+.stat-value-input::-webkit-outer-spin-button,
+.stat-value-input::-webkit-inner-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stat-value-input:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+}
+
+.input-unit {
+    font-size: 0.75rem;
+    color: #7a8794;
+    font-weight: 700;
+}
+
+.remove-instance-btn {
+    background: #fde8e8;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.8rem;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.remove-instance-btn:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Подсветка карточки с добавленными статами */
+.stat-option.has-instances {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f5f9ff 100%) !important;
+    box-shadow: 0 3px 12px rgba(33, 150, 243, 0.15);
+}
+
+.stat-option.has-instances .stat-counter {
+    background: #2196F3;
 }

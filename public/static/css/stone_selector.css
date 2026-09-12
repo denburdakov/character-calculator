@@ -48,11 +48,69 @@
     transform: translateY(-3px);
     box-shadow: 0 8px 20px var(--shadow);
 }
+.stone-option.selected,
+.stone-option.selected:hover { transform: translateY(-3px); }
 
 .stone-option.selected::before {
     transform: scaleX(1);
     background: var(--gradient-secondary);
 }
+
+/* ===== СЧЁТЧИК ВЫБРАННЫХ КАМНЕЙ НА КАРТОЧКЕ ===== */
+.stone-counter {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+
+    color: var(--gray);
+    background: rgba(255, 255, 255, 0.85);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+
+    opacity: 0;
+    transform: scale(0.6);
+    transition: var(--transition);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Активное состояние — когда камень выбран хотя бы раз */
+.stone-counter.active {
+    opacity: 1;
+    transform: scale(1);
+    color: #fff;
+    background: var(--gradient-secondary);
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.45);
+}
+
+/* Для оружейных камней — тёплый акцент */
+.stone-option.weapon-stone .stone-counter.active {
+    background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.45);
+}
+
+/* Небольшая пульсация при добавлении */
+@keyframes stoneCounterPop {
+    0%   { transform: scale(0.6); }
+    50%  { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+.stone-counter.active {
+    animation: stoneCounterPop 0.25s ease-out;
+}
+
 
 /* ===== ВЫБРАННЫЕ КАМНИ ===== */
 #selected-stones {
@@ -228,5 +286,322 @@
     .stone-level-option {
         width: 100%;
         max-width: 200px;
+    }
+}
+
+.stone-category-switcher {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+.stone-cat-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--gray);
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.stone-cat-btn:hover {
+    border-color: var(--primary);
+    background: var(--lighter);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+    .stone-category-switcher {
+        flex-direction: column;
+    }
+    .stone-cat-btn {
+        width: 100%;
+    }
+}
+
+.stone-cat-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.conc-target-select {
+    width: 100%;
+    margin: 6px 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    background: #fff;
+    color: var(--dark);
+    font-family: var(--font-primary);
+    cursor: pointer;
+}
+.conc-target-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* ============================================
+   КОНЦЕНТРАЦИЯ — карточка камня с подсказкой
+   ============================================ */
+.concentration-stone {
+    position: relative;
+    cursor: pointer;
+}
+
+.concentration-stone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 0 rgba(155, 89, 182, 0);
+    transition: box-shadow 0.25s ease;
+}
+
+.concentration-stone:hover::after {
+    box-shadow: inset 0 0 0 2px rgba(155, 89, 182, 0.35);
+}
+
+.conc-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8e44ad;
+    background: rgba(155, 89, 182, 0.08);
+    border: 1px dashed rgba(155, 89, 182, 0.4);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.concentration-stone:hover .conc-hint {
+    background: rgba(155, 89, 182, 0.15);
+    border-color: rgba(155, 89, 182, 0.7);
+    color: #6c3483;
+}
+
+.conc-hint-icon {
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   ПОПАП ВЫБОРА ЦЕЛИ КОНЦЕНТРАЦИИ
+   ============================================ */
+.conc-chooser-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 30, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    padding: 20px;
+}
+
+.conc-chooser-overlay.visible {
+    opacity: 1;
+}
+
+.conc-chooser-modal {
+    background: linear-gradient(160deg, #ffffff 0%, #f7f4fb 100%);
+    border-radius: 20px;
+    padding: 26px 26px 20px;
+    max-width: 620px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow:
+        0 24px 60px rgba(80, 40, 120, 0.35),
+        0 0 0 1px rgba(155, 89, 182, 0.15);
+    position: relative;
+    transform: scale(0.92) translateY(10px);
+    transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.conc-chooser-overlay.visible .conc-chooser-modal {
+    transform: scale(1) translateY(0);
+}
+
+.conc-chooser-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(155, 89, 182, 0.1);
+    color: #8e44ad;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.conc-chooser-close:hover {
+    background: rgba(155, 89, 182, 0.2);
+    transform: rotate(90deg);
+}
+
+.conc-chooser-title {
+    margin: 0 0 6px 0;
+    color: #2c3e50;
+    font-size: 1.25rem;
+    text-align: center;
+    font-weight: 700;
+}
+
+.conc-chooser-subtitle {
+    margin: 0 0 20px 0;
+    text-align: center;
+    color: #8e44ad;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.conc-chooser-subtitle strong {
+    color: #6c3483;
+    font-size: 1.02rem;
+}
+
+.conc-chooser-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.conc-target-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    background: #ffffff;
+    border: 2px solid #e6e0ee;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    font-family: var(--font-primary, inherit);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.conc-target-btn:hover {
+    border-color: #9b59b6;
+    background: linear-gradient(135deg, #f9f2ff, #f0e2ff);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(155, 89, 182, 0.22);
+    color: #6c3483;
+}
+
+.conc-target-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(155, 89, 182, 0.2);
+}
+
+.conc-target-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+}
+
+.conc-target-name {
+    flex: 1;
+}
+
+.conc-chooser-cancel {
+    width: 100%;
+    padding: 11px;
+    background: #eef0f2;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #7f8c8d;
+    font-family: var(--font-primary, inherit);
+    font-size: 0.9rem;
+    transition: all 0.18s ease;
+}
+
+.conc-chooser-cancel:hover {
+    background: #e0e4e8;
+    color: #2c3e50;
+}
+
+/* ============================================
+   ВЫБРАННЫЙ КАМЕНЬ КОНЦЕНТРАЦИИ В СПИСКЕ
+   ============================================ */
+.selected-stone-item.conc-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #f4eaff, #e8d9ff);
+    border: 1px solid rgba(155, 89, 182, 0.35);
+    border-radius: 20px;
+    color: #6c3483;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 3px;
+    box-shadow: 0 2px 6px rgba(155, 89, 182, 0.15);
+}
+
+.selected-stone-item.conc-item .conc-item-icon {
+    font-size: 1rem;
+}
+
+.selected-stone-item.conc-item .conc-item-level {
+    background: rgba(155, 89, 182, 0.2);
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: #6c3483;
+}
+
+/* ============================================
+   АДАПТИВНОСТЬ
+   ============================================ */
+@media (max-width: 600px) {
+    .conc-chooser-modal {
+        padding: 22px 18px 16px;
+        border-radius: 16px;
+    }
+
+    .conc-chooser-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .conc-target-btn {
+        padding: 9px 10px;
+        font-size: 0.82rem;
+        gap: 7px;
+    }
+
+    .conc-target-icon {
+        font-size: 1rem;
+    }
+
+    .conc-chooser-title {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .conc-chooser-grid {
+        grid-template-columns: 1fr;
     }
 }

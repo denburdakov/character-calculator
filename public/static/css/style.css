@@ -1,10 +1,6 @@
-/* style.css - обновленный */
+/* style.css - обновленный (без меню и модалок) */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
     --primary: #3498db;
@@ -21,6 +17,8 @@
     --lighter: #f8f9fa;
     --gray: #95a5a6;
     --border: #bdc3c7;
+    --shadow: rgba(0, 0, 0, 0.15);
+    --shadow-dark: rgba(0, 0, 0, 0.25);
     --gradient-primary: linear-gradient(135deg, #1e88e5, #3b81eb);
     --gradient-secondary: linear-gradient(135deg, #2ecc71, #27ae60);
     --gradient-accent: linear-gradient(135deg, #e74c3c, #c0392b);
@@ -34,13 +32,24 @@
 
 body {
     font-family: var(--font-primary);
-    background: 
+    background:
         linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
         url('./background.svg') no-repeat center center fixed;
     background-size: cover;
     color: var(--dark);
     line-height: 1.6;
     min-height: 100vh;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .container {
@@ -65,17 +74,15 @@ body {
 .header::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
     animation: rotate 20s linear infinite;
 }
 
 @keyframes rotate {
     from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    to   { transform: rotate(360deg); }
 }
 
 .header h1 {
@@ -92,7 +99,6 @@ body {
     margin-bottom: 25px;
 }
 
-/* Panels */
 .left-panel, .center-panel, .right-panel {
     background: transparent !important;
     padding: 25px;
@@ -108,17 +114,9 @@ body {
     box-shadow: var(--box-shadow-hover);
 }
 
-.left-panel {
-    flex: 1;
-}
-
-.center-panel {
-    flex: 2;
-}
-
-.right-panel {
-    flex: 1.5;
-}
+.left-panel  { flex: 1; }
+.center-panel{ flex: 2; }
+.right-panel { flex: 1.5; }
 
 /* Sections */
 .classes-section, .talents-section, .other-section {
@@ -232,30 +230,16 @@ h2::before {
 .stats-tab-btn::after, .elixirs-tab-btn::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 3px;
+    bottom: 0; left: 50%;
+    width: 0; height: 3px;
     background: rgb(255, 255, 255);
     transition: var(--transition);
     transform: translateX(-50%);
 }
 
-.stats-tab-btn.active::after, .elixirs-tab-btn.active::after {
-    width: 80%;
-}
-
-.stats-tab-btn.active {
-    background: rgba(255,255,255,0.2);
-}
-
-.elixirs-tab-btn.active {
-    background: rgba(255,255,255,0.2);
-}
-
-.stats-tab-btn:hover, .elixirs-tab-btn:hover {
-    background: rgba(255,255,255,0.1);
-}
+.stats-tab-btn.active::after, .elixirs-tab-btn.active::after { width: 80%; }
+.stats-tab-btn.active, .elixirs-tab-btn.active { background: rgba(255,255,255,0.2); }
+.stats-tab-btn:hover,  .elixirs-tab-btn:hover  { background: rgba(255,255,255,0.1); }
 
 .stats-tab-content, .elixirs-tab-content {
     padding: 20px;
@@ -267,17 +251,10 @@ h2::before {
     display: none;
     animation: fadeIn 0.3s ease-in-out;
 }
-
-.stats-tab-pane.active, .elixirs-tab-pane.active {
-    display: block;
-}
+.stats-tab-pane.active, .elixirs-tab-pane.active { display: block; }
 
 /* Stats */
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-}
+.stats-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 
 .stats-category h3 {
     margin-bottom: 15px;
@@ -302,9 +279,7 @@ h2::before {
     border-radius: var(--border-radius-sm);
 }
 
-.stat-row label {
-    font-weight: 500;
-}
+.stat-row label { font-weight: 500; }
 
 .stat-row span {
     font-weight: 600;
@@ -323,11 +298,7 @@ h2::before {
     gap: 15px;
 }
 
-.equipment-column {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
+.equipment-column { display: flex; flex-direction: column; gap: 15px; }
 
 .equipment-slot {
     border: 2px dashed var(--border);
@@ -349,8 +320,7 @@ h2::before {
 .equipment-slot::before {
     content: '+';
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     font-size: 2rem;
     color: var(--gray);
@@ -365,19 +335,15 @@ h2::before {
     box-shadow: 0 5px 15px var(--shadow);
 }
 
-.equipment-slot:hover::before {
-    opacity: 0.5;
-    color: var(--primary);
-}
+.equipment-slot:hover::before { opacity: 0.5; color: var(--primary); }
 
 .equipment-slot.equipped {
     border: 2px solid var(--secondary);
     background: linear-gradient(135deg, #f0f9ff, #e1f7e7);
 }
 
-.equipment-slot.equipped::before {
-    display: none;
-}
+.equipment-slot.equipped::before,
+.equipment-slot:not(:empty)::before { display: none; }
 
 .equipment-slot img {
     width: 48px;
@@ -388,10 +354,7 @@ h2::before {
     transition: var(--transition);
 }
 
-.equipment-slot:hover img {
-    transform: scale(1.1);
-}
-
+.equipment-slot:hover img { transform: scale(1.1); }
 .equipment-slot span {
     font-size: 13px;
     font-weight: 600;
@@ -399,13 +362,8 @@ h2::before {
 }
 
 /* Elixirs */
-.elixirs-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
+.elixirs-options { display: flex; flex-direction: column; gap: 12px; }
 
-/* Обновляем цвет текста для эликсиров */
 .elixirs-options label {
     display: flex;
     align-items: center;
@@ -429,15 +387,10 @@ h2::before {
     accent-color: var(--primary);
 }
 
-.elixirs-options span {
-    color: var(--light);
-    font-weight: 500;
-}
+.elixirs-options span { color: var(--light); font-weight: 500; }
 
 /* Options */
-.option-group {
-    margin-bottom: 15px;
-}
+.option-group { margin-bottom: 15px; }
 
 .option-group label {
     display: flex;
@@ -479,70 +432,35 @@ h2::before {
 .footer button::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     transition: var(--transition);
 }
 
-.footer button:hover::before {
-    left: 100%;
-}
-
-.footer button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px var(--shadow);
-}
+.footer button:hover::before { left: 100%; }
+.footer button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow); }
 
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-    from { 
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0);
-    }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Responsive */
 @media (max-width: 1200px) {
-    .main-content {
-        flex-direction: column;
-    }
-    
-    .equipment-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .main-content { flex-direction: column; }
+    .equipment-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-    
-    .equipment-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .footer {
-        flex-direction: column;
-    }
-    
-    .footer button {
-        width: 100%;
-    }
+    .container { padding: 10px; }
+    .equipment-grid { grid-template-columns: 1fr; }
+    .footer { flex-direction: column; }
+    .footer button { width: 100%; }
 }
 
-/* Стили для гильдейского баффа */
+/* Гильдейский бафф */
 .guild-buff-section {
     margin-bottom: 25px;
     padding: 20px;
@@ -553,20 +471,15 @@ h2::before {
     border: 1px solid rgba(255,255,255,0.2);
     position: relative;
     overflow: hidden;
-    color: var(--lighter); /* Добавляем светлый цвет текста для всего раздела */
+    color: var(--lighter);
 }
 
-.guild-buff-section:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--box-shadow-hover);
-}
+.guild-buff-section:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-hover); }
 
 .guild-buff-section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 4px;
     background: linear-gradient(135deg, #1e88e5, #0d47a1);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
@@ -591,24 +504,19 @@ h2::before {
     transition: var(--transition);
     position: relative;
     overflow: hidden;
-    color: var(--light); /* Добавляем цвет текста по умолчанию */
+    color: var(--light);
 }
 
 .guild-buff-option::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent);
     transition: var(--transition);
 }
 
-.guild-buff-option:hover::before {
-    left: 100%;
-}
-
+.guild-buff-option:hover::before { left: 100%; }
 .guild-buff-option:hover {
     border-color: var(--primary);
     background: rgb(0, 0, 0, 0.7);
@@ -622,111 +530,37 @@ h2::before {
     cursor: pointer;
 }
 
-.guild-buff-label {
-    font-weight: 600;
-    color: var(--light);
-    font-size: 1rem;
-    flex: 1;
-}
+.guild-buff-label { font-weight: 600; color: var(--light); font-size: 1rem; flex: 1; }
+.guild-buff-description { font-size: 0.9rem; color: var(--light); margin-top: 5px; line-height: 1.4; }
 
-.guild-buff-description {
-    font-size: 0.9rem;
-    color: var(--light);
-    margin-top: 5px;
-    line-height: 1.4;
-}
-
-/* Состояние когда выбран */
 .guild-buff-option:has(input:checked) {
     background: rgba(46, 204, 113, 0.2) !important;
     border-color: var(--secondary) !important;
     transform: translateX(8px);
 }
 
-.guild-buff-option:has(input:checked) .guild-buff-label {
-    color: var(--light) !important;
-}
+.guild-buff-option:has(input:checked) .guild-buff-label,
+.guild-buff-option:has(input:checked) .guild-buff-description { color: var(--light) !important; }
 
-.guild-buff-option:has(input:checked) .guild-buff-description {
-    color: var(--light) !important;
-}
+.guild-buff-option input[type="checkbox"]:checked { accent-color: var(--secondary); }
+.guild-buff-header h3 { color: var(--lighter); }
 
-/* Анимация для переключения */
-.guild-buff-option input[type="checkbox"] {
-    transition: var(--transition);
-}
-
-.guild-buff-option input[type="checkbox"]:checked {
-    accent-color: var(--secondary);
-}
-
-.guild-buff-header h3 {
-    color: var(--lighter);
-}
-
-/* Адаптивность */
 @media (max-width: 768px) {
-    .guild-buff-section {
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    
-    .guild-buff-header h3 {
-        font-size: 1.1rem;
-    }
-    
-    .guild-buff-option {
-        padding: 12px 15px;
-    }
-    
-    .guild-buff-option input[type="checkbox"] {
-        transform: scale(1.2);
-        margin-right: 12px;
-    }
-    
-    .guild-buff-label {
-        font-size: 0.9rem;
-    }
-    
-    .guild-buff-description {
-        font-size: 0.85rem;
-    }
+    .guild-buff-section { padding: 15px; margin-bottom: 20px; }
+    .guild-buff-header h3 { font-size: 1.1rem; }
+    .guild-buff-option { padding: 12px 15px; }
+    .guild-buff-option input[type="checkbox"] { transform: scale(1.2); margin-right: 12px; }
+    .guild-buff-label { font-size: 0.9rem; }
+    .guild-buff-description { font-size: 0.85rem; }
 }
 
-/* Для очень маленьких экранов */
 @media (max-width: 480px) {
-    .guild-buff-options {
-        gap: 8px;
-    }
-    
-    .guild-buff-option {
-        padding: 10px 12px;
-    }
-    
-    .guild-buff-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
+    .guild-buff-options { gap: 8px; }
+    .guild-buff-option { padding: 10px 12px; }
+    .guild-buff-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 
-/* Отключение выделения текста для всего интерфейса */
-body {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-/* Разрешить выделение для элементов ввода */
-input, textarea, [contenteditable="true"] {
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
-}
-
-/* Стили для секции талантов (аналогично гильдейскому баффу) */
+/* Talent buff section */
 .talent-buff-section {
     margin-bottom: 25px;
     padding: 20px;
@@ -740,19 +574,14 @@ input, textarea, [contenteditable="true"] {
     color: var(--lighter);
 }
 
-.talent-buff-section:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--box-shadow-hover);
-}
+.talent-buff-section:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-hover); }
 
 .talent-buff-section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #e74c3c, #c0392b); /* Другой цвет для отличия */
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
@@ -773,18 +602,13 @@ input, textarea, [contenteditable="true"] {
 .talent-buff-option::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.1), transparent);
     transition: var(--transition);
 }
 
-.talent-buff-option:hover::before {
-    left: 100%;
-}
-
+.talent-buff-option:hover::before { left: 100%; }
 .talent-buff-option:hover {
     border-color: var(--accent);
     background: rgb(0, 0, 0, 0.7);
@@ -798,325 +622,14 @@ input, textarea, [contenteditable="true"] {
     cursor: pointer;
 }
 
-.talent-buff-label {
-    font-weight: 600;
-    color: var(--light);
-    font-size: 1rem;
-    flex: 1;
-}
+.talent-buff-label { font-weight: 600; color: var(--light); font-size: 1rem; flex: 1; }
+.talent-buff-description { font-size: 0.9rem; color: var(--light); margin-top: 5px; line-height: 1.4; }
 
-.talent-buff-description {
-    font-size: 0.9rem;
-    color: var(--light);
-    margin-top: 5px;
-    line-height: 1.4;
-}
-
-/* Состояние когда выбран */
 .talent-buff-option:has(input:checked) {
     background: rgba(231, 76, 60, 0.2) !important;
     border-color: var(--accent) !important;
     transform: translateX(8px);
 }
 
-.talent-buff-option:has(input:checked) .talent-buff-label {
-    color: var(--light) !important;
-}
-
-.talent-buff-option:has(input:checked) .talent-buff-description {
-    color: var(--light) !important;
-}
-
-/* Меню в левом верхнем углу */
-.menu-container {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-}
-
-.menu-button {
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #1e88e5, #0d47a1);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-weight: 600;
-    font-family: var(--font-primary);
-    transition: var(--transition);
-    box-shadow: var(--box-shadow);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.menu-button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-hover);
-}
-
-.menu-button::before {
-    content: '☰';
-    font-size: 1.2em;
-}
-
-.menu-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 8px;
-    background: rgba(44, 62, 80, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-hover);
-    min-width: 200px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: var(--transition);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.menu-dropdown.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.menu-item {
-    padding: 12px 20px;
-    color: var(--light);
-    text-decoration: none;
-    display: block;
-    transition: var(--transition);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-}
-
-.menu-item:last-child {
-    border-bottom: none;
-}
-
-.menu-item:hover {
-    background: rgba(30, 136, 229, 0.2);
-    color: white;
-    padding-left: 25px;
-}
-
-.menu-section {
-    padding: 8px 20px;
-    font-weight: 600;
-    color: var(--primary);
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Модальные окна */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    backdrop-filter: blur(5px);
-}
-
-.modal.active {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    background: linear-gradient(135deg, #2c3e50, #1a252f);
-    border-radius: var(--border-radius);
-    padding: 30px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: var(--box-shadow-hover);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    position: relative;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--primary);
-}
-
-.modal-title {
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    color: var(--light);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: var(--transition);
-    padding: 5px;
-}
-
-.modal-close:hover {
-    color: var(--accent);
-    transform: scale(1.1);
-}
-
-
-.modal-body {
-    color: var(--light);
-    line-height: 1.6;
-}
-
-.modal-body h3 {
-    color: var(--primary);
-    margin: 20px 0 10px 0;
-    font-size: 1.2rem;
-}
-
-.modal-body h4 {
-    color: var(--secondary);
-    margin: 15px 0 8px 0;
-    font-size: 1.1rem;
-}
-
-.modal-body p {
-    margin-bottom: 15px;
-    line-height: 1.6;
-}
-
-.modal-body ul {
-    margin: 10px 0 15px 20px;
-    padding-left: 20px;
-    
-}
-
-.modal-body li {
-    margin-bottom: 8px;
-    line-height: 1.5;
-}
-
-
-.modal-body strong {
-    color: var(--secondary);
-}
-
-/* Адаптивность для меню */
-@media (max-width: 768px) {
-    .menu-container {
-        top: 10px;
-        left: 10px;
-    }
-    
-    .menu-button {
-        padding: 10px 15px;
-        font-size: 0.9rem;
-    }
-    
-    .menu-dropdown {
-        min-width: 180px;
-    }
-    
-    .modal-content {
-        padding: 20px;
-        margin: 10px;
-    }
-}
-
-/* Добавьте эти стили в конец файла style.css */
-
-/* Стили для активации модальных окон */
-.modal.active {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
-}
-
-/* Анимация появления модального окна */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* Стили для скролла в модальных окнах */
-.modal-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 4px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-dark);
-}
-
-/* Улучшенные стили для контента модальных окон */
-
-/* Адаптивность для модальных окон */
-@media (max-width: 768px) {
-    .modal-content {
-        padding: 20px;
-        margin: 15px;
-        width: 95%;
-    }
-    
-    .modal-header {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
-    }
-    
-    .modal-title {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .modal-content {
-        padding: 15px;
-        margin: 10px;
-    }
-    
-    .modal-title {
-        font-size: 1.2rem;
-    }
-    
-    .modal-body h3 {
-        font-size: 1.1rem;
-    }
-}
-.modal-body a {
-    color: var(--primary);
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-.modal-body a:hover {
-    color: var(--secondary);
-    text-decoration: underline;
-}
+.talent-buff-option:has(input:checked) .talent-buff-label,
+.talent-buff-option:has(input:checked) .talent-buff-description { color: var(--light) !important; }
