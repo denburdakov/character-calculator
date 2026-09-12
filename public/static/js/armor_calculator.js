@@ -62,21 +62,21 @@ class ArmorCalculator {
         };
 
         // Бонусы брони от рун улучшения для бижутерии
-        this.jewelryRuneBonuses = {
-            0: { armour: 1269, spell_armour: 1269 },
-            1: { armour: 1369, spell_armour: 1369 },
-            2: { armour: 1586, spell_armour: 1586 },
-            3: { armour: 1840, spell_armour: 1840 },
-            4: { armour: 2221, spell_armour: 2221 },
-            5: { armour: 2728, spell_armour: 2728 },
-            6: { armour: 2928, spell_armour: 2928 },
-            7: { armour: 2928, spell_armour: 2928 },
-            8: { armour: 2726, spell_armour: 2726 },
-            9: { armour: 2928, spell_armour: 2928 },
-            10: { armour: 2928, spell_armour: 2928 },
-            11: { armour: 2928, spell_armour: 2928 },
-            12: { armour: 2928, spell_armour: 2928 }
-        };
+        // this.jewelryRuneBonuses = {
+        //     0: { armour: 1269, spell_armour: 1269 },
+        //     1: { armour: 1369, spell_armour: 1369 },
+        //     2: { armour: 1586, spell_armour: 1586 },
+        //     3: { armour: 1840, spell_armour: 1840 },
+        //     4: { armour: 2221, spell_armour: 2221 },
+        //     5: { armour: 2728, spell_armour: 2728 },
+        //     6: { armour: 2928, spell_armour: 2928 },
+        //     7: { armour: 2928, spell_armour: 2928 },
+        //     8: { armour: 2726, spell_armour: 2726 },
+        //     9: { armour: 2928, spell_armour: 2928 },
+        //     10: { armour: 2928, spell_armour: 2928 },
+        //     11: { armour: 2928, spell_armour: 2928 },
+        //     12: { armour: 2979, spell_armour: 2979 }
+        // };
     }
 
     getBaseArmor(className, slotType, equipmentType, quality, subType) {

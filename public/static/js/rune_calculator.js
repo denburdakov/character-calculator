@@ -2,20 +2,17 @@
 class RuneCalculator {
     constructor() {
         this.runeStats = {};
-        
         this.runeBonuses = {
-            1: { equipment: 0.105, jewelry: 0.10, weapon: 0.105 },
-            2: { equipment: 0.21, jewelry: 0.25, weapon: 0.21 },
-            3: { equipment: 0.315, jewelry: 0.40, weapon: 0.315 },
-            4: { equipment: 0.42, jewelry: 0.55, weapon: 0.42 },
-            5: { equipment: 0.525, jewelry: 0.70, weapon: 0.525 },
-            6: { equipment: 0.63, jewelry: 0.85, weapon: 0.63 },
-            7: { equipment: 0.735, jewelry: 1.00, weapon: 0.735 },
-            8: { equipment: 0.84, jewelry: 1.15, weapon: 0.84 },
-            9: { equipment: 0.88, jewelry: 1.20, weapon: 0.88 },
-            10: { equipment: 0.92, jewelry: 1.25, weapon: 0.92 },
-            11: { equipment: 0.96, jewelry: 1.30, weapon: 0.96 },
-            12: { equipment: 1.00, jewelry: 1.35, weapon: 1.00 }
+            1:  { equipment: 0.05, jewelry: 0.05, weapon: 0.05 },
+            2:  { equipment: 0.09, jewelry: 0.09, weapon: 0.09 },
+            3:  { equipment: 0.14, jewelry: 0.14, weapon: 0.14 },
+            4:  { equipment: 0.20, jewelry: 0.20, weapon: 0.20 },
+            5:  { equipment: 0.28, jewelry: 0.28, weapon: 0.28 },
+            6:  { equipment: 0.38, jewelry: 0.38, weapon: 0.38 },
+            7:  { equipment: 0.50, jewelry: 0.50, weapon: 0.50 },
+            8:  { equipment: 0.64, jewelry: 0.64, weapon: 0.64 },
+            9:  { equipment: 0.80, jewelry: 0.80, weapon: 0.80 },
+            10: { equipment: 1.00, jewelry: 1.00, weapon: 1.00 }
         };
 
         this.equipmentSlots = ['chest', 'helm', 'shoulders', 'pants', 'boots', 'hands', 'bracers', 'belt', 'cape'];
@@ -24,7 +21,7 @@ class RuneCalculator {
     }
 
     setRuneLevel(slotType, runeLevel) {
-        if (runeLevel >= 0 && runeLevel <= 12) {
+        if (runeLevel >= 0 && runeLevel <= 10) {
             this.runeStats[slotType] = runeLevel;
         }
     }
@@ -35,15 +32,15 @@ class RuneCalculator {
         if (runeLevel === 0 || runeLevel === '0' || !runeLevel) {
             return 0;
         }
-        
+
         const level = parseInt(runeLevel, 10);
-        if (isNaN(level) || level < 1 || level > 12) {
+        if (isNaN(level) || level < 1 || level > 10) {
             return 0;
         }
-        
+
         const runeData = this.runeBonuses[level];
         if (!runeData) return 0;
-        
+
         // Определяем тип слота и возвращаем соответствующий множитель
         if (this.equipmentSlots.includes(slotType)) {
             return runeData.equipment || 0;
@@ -52,7 +49,7 @@ class RuneCalculator {
         } else if (this.weaponSlots.includes(slotType)) {
             return runeData.weapon || 0;
         }
-        
+
         return 0;
     }
 

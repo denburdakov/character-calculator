@@ -16,11 +16,19 @@ class ElixirCalculator {
                 'health10': { stats: { 'hp': 0.10, 'armour': 0.10, 'spell_armour': 0.10, 'crit_damage_resistance': 0.10 } },
                 'health15': { stats: { 'hp': 0.15, 'armour': 0.15, 'spell_armour': 0.15, 'crit_damage_resistance': 0.15 } },
                 'defense10': { stats: { 'block': 0.10, 'armour': 0.10, 'spell_armour': 0.10, 'crit_damage_resistance': 0.10 } },
-                'defense15': { stats: { 'block': 0.15, 'armour': 0.15, 'spell_armour': 0.15, 'crit_damage_resistance': 0.15 } }
+                'defense15': { stats: { 'block': 0.15, 'armour': 0.15, 'spell_armour': 0.15, 'crit_damage_resistance': 0.15 } },
+
+                // Новый эликсир Иммунитета
+                'immunity10': { stats: { 'armour': 0.10, 'spell_armour': 0.10, 'crit_damage_resistance': 0.10 } },
+                'immunity15': { stats: { 'armour': 0.15, 'spell_armour': 0.15, 'crit_damage_resistance': 0.15 } }
             };
         } catch (error) {
             console.error('Ошибка при инициализации ElixirCalculator:', error);
             throw error;
         }
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.elixirCalculator = new ElixirCalculator();
 }

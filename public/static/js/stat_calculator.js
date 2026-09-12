@@ -162,33 +162,31 @@ class StatCalculator {
         if (runeLevel === 0 || runeLevel === '0' || !runeLevel || !window.runeCalculator) {
             return 0;
         }
-        
-        // Преобразуем в число
+
         const level = parseInt(runeLevel, 10);
-        
-        // Проверяем корректность уровня
-        if (isNaN(level) || level < 1 || level > 12) {
+
+        // Проверяем корректность уровня (теперь 1..10)
+        if (isNaN(level) || level < 1 || level > 10) {
             console.warn(`Некорректный уровень рун: ${runeLevel}`);
             return 0;
         }
-        
+
         const runeBonuses = window.runeCalculator.runeBonuses;
         const runeData = runeBonuses[level];
-        
+
         if (!runeData) {
             console.error(`❌ ОШИБКА: Данные для уровня рун ${level} не найдены!`);
             return 0;
         }
-        
-        // Определяем тип слота
-        const equipmentSlots = window.runeCalculator.equipmentSlots || 
+
+        const equipmentSlots = window.runeCalculator.equipmentSlots ||
             ['chest', 'helm', 'shoulders', 'pants', 'boots', 'hands', 'bracers', 'belt', 'cape'];
-        const jewelrySlots = window.runeCalculator.jewelrySlots || 
+        const jewelrySlots = window.runeCalculator.jewelrySlots ||
             ['neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
         const weaponSlots = window.runeCalculator.weaponSlots || ['rhand', 'lhand'];
-        
+
         let multiplier = 0;
-        
+
         if (equipmentSlots.includes(slotType)) {
             multiplier = runeData.equipment || 0;
         } else if (jewelrySlots.includes(slotType)) {
@@ -196,7 +194,7 @@ class StatCalculator {
         } else if (weaponSlots.includes(slotType)) {
             multiplier = runeData.weapon || 0;
         }
-        
+
         return multiplier;
     }
     
@@ -284,47 +282,14 @@ class StatCalculator {
                     const baseStat = stat.replace('_percent', '');
                     percentBonuses[baseStat] = (percentBonuses[baseStat] || 0) + (value / 100);
                 } else {
-                    // Плоские статы
+                    // Плоские статы — единый множитель для всех типов слотов
                     let finalValue = value;
-                    
-                    // Применяем множитель рун для ВСЕХ типов слотов (включая бижутерию)
+
                     if (runeMultiplier > 0) {
-                        // Для бижутерии используем специальную логику или общий множитель?
-                        if (isJewelry) {
-                            // Вариант 1: Используем специальные бонусы из armor_calculator
-                            if (window.armorCalculator?.jewelryRuneBonuses?.[runeLevel]) {
-                                const jewelryBonus = window.armorCalculator.jewelryRuneBonuses[runeLevel];
-                                
-                                // Для специальных статов (armour, spell_armour) используем специальные бонусы
-                                if (stat === 'armour' && jewelryBonus.armour) {
-                                    finalValue = value + jewelryBonus.armour;
-                                } else if (stat === 'spell_armour' && jewelryBonus.spell_armour) {
-                                    finalValue = value + jewelryBonus.spell_armour;
-                                } else {
-                                    // Для остальных статов используем общий множитель
-                                    const runeBonus = Math.round(value * runeMultiplier);
-                                    finalValue = value + runeBonus;
-                                }
-                            } else {
-                                // Если нет специальных бонусов, используем общий множитель
-                                const runeBonus = Math.round(value * runeMultiplier);
-                                finalValue = value + runeBonus;
-                            }
-                        } else {
-                            // Для обычной экипировки и оружия
-                            const runeBonus = Math.round(value * runeMultiplier);
-                            finalValue = value + runeBonus;
-                        }
-                        
-                        console.log(`🔧 Рунный расчет для ${slotType}.${stat}:`, {
-                            baseValue: value,
-                            runeMultiplier: runeMultiplier,
-                            runeBonus: finalValue - value,
-                            totalValue: finalValue,
-                            isJewelry: isJewelry
-                        });
+                        const runeBonus = Math.round(value * runeMultiplier);
+                        finalValue = value + runeBonus;
                     }
-                    
+
                     flatBonuses[stat] = (flatBonuses[stat] || 0) + finalValue;
                 }
             });
@@ -337,47 +302,56 @@ class StatCalculator {
     
     calculateStonesBonus() {
         const cacheKey = `${this.currentClass}_${JSON.stringify(this.equipmentStats)}`;
-        
-        if (this.cache.stones[cacheKey]) {
-            return this.cache.stones[cacheKey];
-        }
-        
-        const flatBonuses = {};
-        const percentBonuses = {}; // Для процентных камней, если понадобятся отдельно
+        if (this.cache.stones[cacheKey]) return this.cache.stones[cacheKey];
 
-        // Проходим по всем слотам с экипировкой
+        const flatBonuses = {};       // Абсолютные (камни силы)
+        const percentBonuses = {};    // Проценты (концентрация + оружейные)
+        const concentrationBonuses = {}; // { stat: totalPercent } от концентрации
+
         Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
             if (!equipment || !equipment.stones || equipment.stones.length === 0) return;
 
-            // Получаем калькулятор камней
             const stoneCalc = window.stoneCalculator;
             if (!stoneCalc) return;
 
-            // Проходим по всем камням в слоте
             equipment.stones.forEach(stone => {
-                const stoneId = stone.id;
-                const stoneLevel = stone.level;
-                const stoneData = stoneCalc.stoneBonuses[stoneId];
+                const { id, level, category, targetStat } = stone;
 
-                if (!stoneData) {
-                    console.warn(`Данные для камня ${stoneId} не найдены`);
+                // Определяем категорию (для старых сохранений без category)
+                const cat = category ||
+                    (['rhand', 'lhand'].includes(slotType) ? 'weapon' :
+                    (stoneBonuses.concentration && stoneBonuses.concentration[id] ? 'concentration' : 'strength'));
+
+                const data = cat === 'weapon'
+                    ? stoneBonuses.weapon[id]
+                    : cat === 'concentration'
+                        ? stoneBonuses.concentration[id]
+                        : stoneBonuses.strength[id];
+
+                if (!data) {
+                    console.warn(`Не найден камень ${id} (${cat})`);
                     return;
                 }
 
-                // Получаем значение для данного уровня камня
-                const value = stoneData.values[stoneLevel - 1];
-                
-                if (stoneData.type === 'absolute') {
-                    // Для абсолютных камней добавляем как плоский бонус
-                    flatBonuses[stoneId] = (flatBonuses[stoneId] || 0) + value;
-                } else if (stoneData.type === 'percent') {
-                    // Для процентных камней пока просто логируем, они будут обработаны отдельно
-                    percentBonuses[stoneId] = (percentBonuses[stoneId] || 0) + value;
+                const value = data.values[level - 1] || 0;
+
+                if (data.type === 'absolute') {
+                    flatBonuses[id] = (flatBonuses[id] || 0) + value;
+                } else if (data.type === 'percent') {
+                    // Оружейный процентный — идёт в общий percentBonuses
+                    const baseStat = id.replace('_percent', '');
+                    percentBonuses[baseStat] = (percentBonuses[baseStat] || 0) + (value / 100);
+                } else if (data.type === 'concentration') {
+                    // Концентрация — процент к указанной характеристике
+                    if (targetStat) {
+                        concentrationBonuses[targetStat] =
+                            (concentrationBonuses[targetStat] || 0) + (value / 100);
+                    }
                 }
             });
         });
 
-        const result = { flat: flatBonuses, percent: percentBonuses };
+        const result = { flat: flatBonuses, percent: percentBonuses, concentration: concentrationBonuses };
         this.cache.stones[cacheKey] = result;
         return result;
     }
@@ -455,7 +429,7 @@ class StatCalculator {
         const offensiveElixir = elixirCalculator.elixirBonuses[this.elixirStats.offensive];
         if (offensiveElixir && offensiveElixir.stats) {
             Object.entries(offensiveElixir.stats).forEach(([stat, percent]) => {
-                bonuses[stat] = (bonuses[stat] || 0) + (percent / 100);
+                bonuses[stat] = (bonuses[stat] || 0) + percent;
             });
         }
         
@@ -463,7 +437,7 @@ class StatCalculator {
         const defensiveElixir = elixirCalculator.elixirBonuses[this.elixirStats.defensive];
         if (defensiveElixir && defensiveElixir.stats) {
             Object.entries(defensiveElixir.stats).forEach(([stat, percent]) => {
-                bonuses[stat] = (bonuses[stat] || 0) + (percent / 100);
+                bonuses[stat] = (bonuses[stat] || 0) + percent;
             });
         }
         
@@ -521,7 +495,6 @@ class StatCalculator {
         // Получаем бонусы от гильдбаффа
         const guildBonuses = this.calculateGuildBuffBonus();
         
-        // ИСПРАВЛЕНИЕ: Правильный порядок расчета
         // 1. Начинаем с базовых значений
         let result = { ...baseStats };
         
@@ -579,7 +552,6 @@ class StatCalculator {
                 guildBonuses.crit_damage_resistance - (guildBonuses.all_stats || 0);
         }
         
-        // ВАЖНО: Сначала применяем процентные бонусы к scalabledValue (база + экипировка + таланты)
         // Затем добавляем non-scalable значения (камни) уже после процентов
         Object.entries(percentBonuses).forEach(([stat, percent]) => {
             if (result[stat] !== undefined && percent !== 0) {
@@ -609,29 +581,30 @@ class StatCalculator {
             }
         });
         
-        // 8. Применяем бонусы от ПРОЦЕНТНЫХ камней (для оружия)
-        // Процентные камни должны применяться к итоговому значению ПОСЛЕ добавления абсолютных камней
-        Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
-            if (!equipment || !equipment.stones || equipment.stones.length === 0) return;
+        // 8. Применяем бонусы от ПРОЦЕНТНЫХ камней (оружие + концентрация)
+        //    ВАЖНО: применяются к итоговому значению ПОСЛЕ добавления абсолютных камней.
 
+        // 8a. Концентрация
+        Object.entries(stonesBonuses.concentration || {}).forEach(([stat, percent]) => {
+            if (result[stat] !== undefined && percent > 0) {
+                const bonus = Math.floor(result[stat] * percent);
+                result[stat] += bonus;
+            }
+        });
+
+        // 8b. Оружейные проценты
+        Object.entries(this.equipmentStats).forEach(([slotType, equipment]) => {
+            if (!equipment || !equipment.stones) return;
             const stoneCalc = window.stoneCalculator;
             if (!stoneCalc) return;
 
             equipment.stones.forEach(stone => {
-                const stoneId = stone.id;
-                const stoneLevel = stone.level;
-                const stoneData = stoneCalc.stoneBonuses[stoneId];
-
-                if (stoneData && stoneData.type === 'percent' && stoneData.values) {
-                    const percentValue = stoneData.values[stoneLevel - 1] / 100;
-                    
-                    // Применяем процент к соответствующей характеристике
-                    // Камень `hp_percent` применяется к `hp`
-                    const targetStat = stoneId.replace('_percent', '');
-                    
+                const data = stoneBonuses.weapon[stone.id];
+                if (data && data.type === 'percent') {
+                    const percent = (data.values[stone.level - 1] || 0) / 100;
+                    const targetStat = stone.id.replace('_percent', '');
                     if (result[targetStat] !== undefined) {
-                        const bonus = Math.floor(result[targetStat] * percentValue);
-                        result[targetStat] += bonus;
+                        result[targetStat] += Math.floor(result[targetStat] * percent);
                     }
                 }
             });

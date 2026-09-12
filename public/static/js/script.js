@@ -229,33 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.updateStatsDisplay(totalStats);
     }
 
-    // Обработчик гильдейского баффа
-    const guildBuffElement = document.getElementById('guild-buff');
-    if (guildBuffElement) {
-        guildBuffElement.addEventListener('change', function() {
-            if (window.statCalculator) {
-                window.statCalculator.setGuildBuff(this.checked);
-                setTimeout(() => {
-                    updateAllStats();
-                }, 100);
-            }
-        });
-    }
-
-    // Обработчики эликсиров
-    document.querySelectorAll('input[name="offensive-elixir"], input[name="defensive-elixir"]').forEach(input => {
-        input.addEventListener('change', function() {
-            if (!window.statCalculator) return;
-            
-            const offensiveElixir = document.querySelector('input[name="offensive-elixir"]:checked');
-            const defensiveElixir = document.querySelector('input[name="defensive-elixir"]:checked');
-            
-            if (offensiveElixir && defensiveElixir) {
-                window.statCalculator.setElixirs(offensiveElixir.value, defensiveElixir.value);
-                updateAllStats();
-            }
-        });
-    });
 
     // Обработчик для чекбокса талантов
     const talentBuffElement = document.getElementById('talent-buff');
