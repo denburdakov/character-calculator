@@ -160,6 +160,6 @@
 
     // ---------- Logout ----------
     async function handleLogout() {
-        window.location.href = '/logout';   // GET-редирект, как у вас в server.js
+        window.location.href = '/logout';
     }
 })();

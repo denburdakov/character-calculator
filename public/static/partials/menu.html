@@ -1,0 +1,82 @@
+<!-- ==================== МЕНЮ ==================== -->
+<div class="menu-container">
+    <button class="menu-button" type="button">Меню</button>
+    <div class="menu-dropdown">
+        <div class="menu-section">Основное</div>
+        <a class="menu-item" data-modal="help">Справка</a>
+        <a class="menu-item" data-modal="about">О программе</a>
+
+        <div class="menu-section">Дополнительное</div>
+        <a class="menu-item" data-modal="donations">Пожертвования</a>
+
+        <div class="menu-section">Правовая информация</div>
+        <a class="menu-item" data-modal="legal">Юридические права</a>
+        <a class="menu-item" data-modal="licenses">Лицензии ПО</a>
+        <a class="menu-item" data-modal="game-assets">Лицензии игровых ресурсов</a>
+
+        <div class="menu-section">Аккаунт</div>
+        <a class="menu-item" id="logout-btn">Выйти из аккаунта</a>
+    </div>
+</div>
+
+<!-- ==================== ОБОЛОЧКИ МОДАЛОК ==================== -->
+<!-- Тело каждой модалки пустое, контент грузится динамически -->
+<div class="modal" id="help-modal" data-modal-name="help">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Справка</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
+
+<div class="modal" id="about-modal" data-modal-name="about">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">О программе</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
+
+<div class="modal" id="donations-modal" data-modal-name="donations">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Поддержка проекта</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
+
+<div class="modal" id="legal-modal" data-modal-name="legal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Юридические права</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
+
+<div class="modal" id="licenses-modal" data-modal-name="licenses">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Лицензии ПО</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
+
+<div class="modal" id="game-assets-modal" data-modal-name="game-assets">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Лицензии игровых ресурсов</h2>
+            <button class="modal-close" type="button" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="modal-body" data-modal-body></div>
+    </div>
+</div>
