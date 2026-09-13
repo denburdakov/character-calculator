@@ -17,15 +17,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Сессии
-const SQLiteStore = require('connect-sqlite3')(session);
+const SqliteStore = require('better-sqlite3-session-store')(session);
+const Database = require('better-sqlite3');
+const db = new Database('./database/sessions.db');
+
 app.use(session({
     name: 'sessionId',
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    store: new SQLiteStore({
-        db: 'sessions.db',
-        dir: './database'
+    store: new SqliteStore({
+        client: db,
+        expired: { clear: true, intervalMs: 900000 }
     }),
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 дней
