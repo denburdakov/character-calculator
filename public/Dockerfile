@@ -15,10 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=source /src/package.json /src/package-lock.json ./
 
-# Принудительно собираем sqlite3 / better-sqlite3 из исходников,
-# чтобы они линковались с GLIBC 2.36 (Bookworm), а не с 2.38.
+# Собираем sqlite3/better-sqlite3 из исходников под GLIBC 2.36 Bookworm
 ENV npm_config_build_from_source=true
-
 RUN npm ci --omit=dev && npm cache clean --force
 
 # ---------- Стадия 2: runtime ----------
@@ -28,13 +26,14 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=5000
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=source /src/package.json /src/package-lock.json ./
-COPY --from=source /src/server.js ./
-COPY --from=source /src/routes ./routes
-COPY --from=source /src/database ./database
-COPY --from=source /src/public ./public
+# 1) Кладём ВЕСЬ код из git-клона (server.js, routes/, utils/, config/,
+#    middleware/, public/, database/ и т.д. — всё, что есть в репо)
+COPY --from=source /src/ ./
 
+# 2) Поверх — уже собранные node_modules (перекроют любые, если вдруг были)
+COPY --from=builder /app/node_modules ./node_modules
+
+# Права и непривилегированный пользователь
 RUN mkdir -p /app/database \
     && groupadd -r app \
     && useradd -r -g app -d /app -s /sbin/nologin app \
