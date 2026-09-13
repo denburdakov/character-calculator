@@ -3,7 +3,7 @@
 # ---------- Стадия 0: забираем исходники из репозитория ----------
 FROM alpine/git:latest AS source
 WORKDIR /src
-RUN git clone --depth 1 --branch main \
+RUN git clone --depth 1 --branch dev \
         https://github.com/denburdakov/character-calculator.git .
 # если ветка не main — поменяйте на master или свою
 
