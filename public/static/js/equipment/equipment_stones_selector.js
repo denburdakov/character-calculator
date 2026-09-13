@@ -1,284 +1,392 @@
 // equipment_stones_selector.js
-// Функции для выбора камней
+// Выбор камней: Камни Силы (absolute) / Камни Концентрации (percent) / Оружейные камни
 
+// Какие статы доступны для Камней Концентрации
+const ConcentrationTargetStats = {
+    'hp':                     'Здоровье',
+    'mp':                     'Энергия',
+    'hp_reg':                 'Восст. Здоровья',
+    'mp_reg':                 'Восст. Энергии',
+    'attack_power':           'Сила атаки',
+    'attack_speed':           'Скорость атаки',
+    'hit':                    'Точность',
+    'crit':                   'Крит. Урон',
+    'dodge':                  'Уклонение',
+    'parry':                  'Парирование',
+    'resist':                 'Сопр. магии',
+    'armour':                 'Броня',
+    'spell_armour':           'Маг. Броня',
+    'block':                  'Блок',
+    'crit_damage_resistance': 'Сопр. Крит'
+};
+
+// Иконки для характеристик (используются в попапе выбора цели)
+const ConcentrationStatIcons = {
+    'hp':                     '❤️',
+    'mp':                     '💠',
+    'hp_reg':                 '💖',
+    'mp_reg':                 '💧',
+    'attack_power':           '⚔️',
+    'attack_speed':           '💨',
+    'hit':                    '🎯',
+    'crit':                   '💥',
+    'dodge':                  '🌀',
+    'parry':                  '🛡️',
+    'resist':                 '✨',
+    'armour':                 '🪨',
+    'spell_armour':           '🔮',
+    'block':                  '🔰',
+    'crit_damage_resistance': '🚫'
+};
+
+function getConcentrationStatIcon(statKey) {
+    return ConcentrationStatIcons[statKey] || '📊';
+}
+
+/* ============================================================
+   ПОПАП ВЫБОРА ХАРАКТЕРИСТИКИ ДЛЯ КОНЦЕНТРАЦИИ
+   ============================================================ */
+function showConcentrationTargetChooser(stoneId, level, onSelect) {
+    // Удаляем предыдущий попап, если был
+    document.querySelectorAll('.conc-chooser-overlay').forEach(el => el.remove());
+
+    const data = stoneBonuses.concentration[stoneId];
+    const value = data ? data.values[level - 1] : 0;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'conc-chooser-overlay';
+
+    overlay.innerHTML = `
+        <div class="conc-chooser-modal" role="dialog" aria-modal="true">
+            <button class="conc-chooser-close" title="Закрыть">✕</button>
+            <h3 class="conc-chooser-title">✨ Куда направить Концентрацию?</h3>
+            <p class="conc-chooser-subtitle">
+                Уровень <strong>${level}</strong> · <strong>+${value}%</strong> к выбранной характеристике
+            </p>
+            <div class="conc-chooser-grid">
+                ${Object.entries(ConcentrationTargetStats).map(([k, v]) => `
+                    <button type="button" class="conc-target-btn" data-stat="${k}">
+                        <span class="conc-target-icon">${getConcentrationStatIcon(k)}</span>
+                        <span class="conc-target-name">${v}</span>
+                    </button>
+                `).join('')}
+            </div>
+            <button type="button" class="conc-chooser-cancel">Отмена</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Анимация появления
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    // Выбор характеристики
+    overlay.querySelectorAll('.conc-target-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const stat = btn.getAttribute('data-stat');
+            closeChooser();
+            onSelect(stat);
+        });
+    });
+
+    // Отмена
+    overlay.querySelector('.conc-chooser-cancel').addEventListener('click', closeChooser);
+    overlay.querySelector('.conc-chooser-close').addEventListener('click', closeChooser);
+
+    // Клик по фону
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeChooser();
+    });
+
+    // Esc
+    const escHandler = (e) => {
+        if (e.key === 'Escape') closeChooser();
+    };
+    document.addEventListener('keydown', escHandler);
+
+    function closeChooser() {
+        document.removeEventListener('keydown', escHandler);
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 180);
+    }
+}
+
+/* ============================================================
+   ОСНОВНАЯ ФУНКЦИЯ — ОТКРЫТИЕ СЕЛЕКТОРА КАМНЕЙ
+   ============================================================ */
 function openStoneSelector(slotType, equipmentType) {
-    const isWeaponOrShield = EquipmentConfig.weaponSlots.includes(slotType) || 
-                            (slotType === 'lhand' && window.selectedLeftHandType === 'weapon') ||
-                            (slotType === 'lhand' && window.selectedLeftHandType === 'shield');
-    
+    const isWeaponOrShield = EquipmentConfig.weaponSlots.includes(slotType) ||
+                            (slotType === 'lhand' && (window.selectedLeftHandType === 'weapon' || window.selectedLeftHandType === 'shield'));
+
     let isTwoHandedWeapon = false;
-    
     if (slotType === 'rhand') {
         isTwoHandedWeapon = window.selectedWeaponType === 'two-handed';
     }
-    
+
     if (EquipmentConfig.skipStonesSlots.includes(slotType)) {
         applyEquipmentSelection(slotType, equipmentType);
         window.closeModal();
         return;
     }
 
-    const stoneBonuses = window.stoneBonuses || stoneBonusesData; // Используем данные из конфига
-    
-    const stones = isWeaponOrShield ? StonesData.weapon : StonesData.regular;
-    const stoneLevels = [1, 2, 3, 4, 5];
-
-    let qualityInfo = '';
-    if (slotType === 'cape' && window.selectedQuality) {
-        qualityInfo = `<p class="quality-info">Качество: ${EquipmentConfig.qualityNames[window.selectedQuality]}</p>`;
-    }
-
-    let weaponInfo = '';
-    if (slotType === 'rhand' && window.selectedWeaponType) {
-        weaponInfo = `<p class="weapon-info">Тип: ${EquipmentConfig.weaponTypeNames[window.selectedWeaponType]}</p>`;
-    }
-
-    const levelSelectorHTML = `
-        <div class="stone-level-selector">
-            <h4>Уровень камня:</h4>
-            <div class="stone-levels">
-                ${stoneLevels.map(level => `
-                    <div class="stone-level-option" data-level="${level}">
-                        <span>Ур. ${level}</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-
-    window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор камней</h2>
-        ${qualityInfo}
-        ${weaponInfo}
-        <p class="modal-subtitle" id="stone-subtitle">${getStoneSubtitle(slotType, isWeaponOrShield, isTwoHandedWeapon)}</p>
-        
-        ${levelSelectorHTML}
-
-        <div class="stones-grid">
-            ${stones.map(stone => `
-                <div class="stone-option" data-stone="${stone.id}" style="background: ${stone.color}20; border: 2px solid ${stone.color}40;">
-                    <h3 style="color: ${stone.color};">${stone.name}</h3>
-                    <p class="stone-values" id="stone-${stone.id}-values" style="font-size: 0.9rem; margin: 5px 0;">
-                        ${getStoneValueDisplay(stone.id, 1, isWeaponOrShield, stoneBonuses)}
-                    </p>
-                    <div class="stone-counter" id="stone-${stone.id}-counter">0</div>
-                </div>
-            `).join('')}
-        </div>
-
-        <div id="selected-stones">
-            <h4>Выбранные камни: <span id="stone-counter">0/${getMaxStones(slotType, isTwoHandedWeapon)}</span></h4>
-            <div id="stones-list">Не выбрано</div>
-            <button id="reset-stones" class="modal-button button-reset">Сбросить камни</button>
-        </div>
-
-        <div class="button-container">
-            <button id="back-to-runes" class="modal-button button-back">← Назад</button>            
-            <button id="skip-stones" class="modal-button button-skip">Без камней</button>
-            <button id="confirm-stones" class="modal-button button-confirm">Применить экипировку</button>
-        </div>
-    `;
-
-    updateStoneValues(1, isWeaponOrShield, stoneBonuses);
-    
     window.selectedStones = [];
     let currentStoneLevel = 1;
+    let currentStoneCategory = isWeaponOrShield ? 'weapon' : 'strength';
 
-    document.querySelectorAll('.stone-level-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.stone-level-option').forEach(opt => {
-                opt.classList.remove('selected');
+    const render = () => {
+        const maxStones = getMaxStones(slotType, isTwoHandedWeapon);
+
+        let weaponInfo = '';
+        if (slotType === 'rhand' && window.selectedWeaponType) {
+            weaponInfo = `<p class="weapon-info">Тип: ${EquipmentConfig.weaponTypeNames[window.selectedWeaponType]}</p>`;
+        }
+
+        // Переключатель категории (только для не-оружия)
+        const categorySwitcher = isWeaponOrShield ? '' : `
+            <div class="stone-category-switcher">
+                <button class="stone-cat-btn ${currentStoneCategory === 'strength' ? 'active' : ''}" data-cat="strength">💎 Камни Силы</button>
+                <button class="stone-cat-btn ${currentStoneCategory === 'concentration' ? 'active' : ''}" data-cat="concentration">✨ Камни Концентрации</button>
+            </div>
+        `;
+
+        let stones = [];
+        if (isWeaponOrShield) {
+            stones = StonesData.weapon;
+        } else if (currentStoneCategory === 'concentration') {
+            stones = StonesData.concentration;
+        } else {
+            stones = StonesData.strength;
+        }
+
+        const maxLevel = isWeaponOrShield ? 5 : 10;
+        const levels = Array.from({ length: maxLevel }, (_, i) => i + 1);
+        const isConcentrationCategory = !isWeaponOrShield && currentStoneCategory === 'concentration';
+
+        const cardsHTML = stones.map(stone => {
+            const bonusData = isWeaponOrShield
+                ? stoneBonuses.weapon[stone.id]
+                : (currentStoneCategory === 'concentration'
+                    ? stoneBonuses.concentration[stone.id]
+                    : stoneBonuses.strength[stone.id]);
+
+            const levelValue = bonusData ? bonusData.values[currentStoneLevel - 1] : 0;
+            const isPercent = bonusData && (bonusData.type === 'percent' || bonusData.type === 'concentration');
+            const valueText = isPercent ? `+${levelValue}%` : `+${levelValue} ед.`;
+
+            // Подсказка / превью цели для концентрации
+            const concHint = isConcentrationCategory ? `
+                <div class="conc-hint">
+                    <span class="conc-hint-icon">🎯</span>
+                    <span class="conc-hint-text">Нажмите, чтобы выбрать характеристику</span>
+                </div>
+            ` : '';
+
+            return `
+                <div class="stone-option ${isConcentrationCategory ? 'concentration-stone' : ''}"
+                     data-stone="${stone.id}"
+                     style="background: ${stone.color}20; border: 2px solid ${stone.color}40;">
+                    <h3 style="color: ${stone.color};">${stone.name}</h3>
+                    <p class="stone-values" id="stone-${stone.id}-values">${valueText}</p>
+                    ${concHint}
+                    <div class="stone-counter" id="stone-${stone.id}-counter">0</div>
+                </div>
+            `;
+        }).join('');
+
+        window.modalContent.innerHTML = `
+            <h2 class="modal-title">Выбор камней</h2>
+            ${weaponInfo}
+            ${categorySwitcher}
+            <p class="modal-subtitle" id="stone-subtitle">${getStoneSubtitle(slotType, isWeaponOrShield, isTwoHandedWeapon)}</p>
+
+            <div class="stone-level-selector">
+                <h4>Уровень камня:</h4>
+                <div class="stone-levels">
+                    ${levels.map(lvl => `
+                        <div class="stone-level-option ${lvl === currentStoneLevel ? 'selected' : ''}" data-level="${lvl}">
+                            <span>Ур. ${lvl}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="stones-grid">${cardsHTML}</div>
+
+            <div id="selected-stones">
+                <h4>Выбранные камни: <span id="stone-counter">0/${maxStones}</span></h4>
+                <div id="stones-list">Не выбрано</div>
+                <button id="reset-stones" class="modal-button button-reset">Сбросить камни</button>
+            </div>
+
+            <div class="button-container">
+                <button id="back-to-runes" class="modal-button button-back">← Назад</button>
+                <button id="skip-stones" class="modal-button button-skip">Без камней</button>
+                <button id="confirm-stones" class="modal-button button-confirm">Применить экипировку</button>
+            </div>
+        `;
+
+        bindEvents();
+    };
+
+    const bindEvents = () => {
+        const isWeaponOrShieldLocal = isWeaponOrShield;
+        const maxStones = getMaxStones(slotType, isTwoHandedWeapon);
+        const isConcentrationLocal = !isWeaponOrShield && currentStoneCategory === 'concentration';
+
+        // Переключение категории
+        document.querySelectorAll('.stone-cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentStoneCategory = btn.getAttribute('data-cat');
+                window.selectedStones = [];
+                render();
             });
-            this.classList.add('selected');
-            currentStoneLevel = parseInt(this.getAttribute('data-level'));
-            updateStoneValues(currentStoneLevel, isWeaponOrShield, stoneBonuses);
         });
-    });
 
-    document.querySelector('.stone-level-option[data-level="1"]')?.classList.add('selected');
+        // Уровень
+        document.querySelectorAll('.stone-level-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                currentStoneLevel = parseInt(opt.getAttribute('data-level'));
+                render();
+            });
+        });
 
-    document.querySelectorAll('.stone-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const stoneId = this.getAttribute('data-stone');
-            const stone = stones.find(s => s.id === stoneId);
-            const maxStones = getMaxStones(slotType, isTwoHandedWeapon);
-            
-            if (window.selectedStones.length >= maxStones) {
-                alert(`Можно выбрать не более ${maxStones} камней`);
-                return;
-            }
-            
-            if (isWeaponOrShield) {
-                const sameStoneCount = window.selectedStones.filter(s => s.id === stoneId).length;
-                if (sameStoneCount >= 2) {
-                    alert('Можно установить максимум 2 одинаковых камня в оружие');
+        // Клик по камню
+        document.querySelectorAll('.stone-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const stoneId = option.getAttribute('data-stone');
+
+                if (window.selectedStones.length >= maxStones) {
+                    alert(`Можно выбрать не более ${maxStones} камней`);
                     return;
                 }
-            } else {
-                const sameStoneExists = window.selectedStones.some(s => s.id === stoneId);
-                if (sameStoneExists) {
-                    alert('Нельзя устанавливать одинаковые камни в обычную экипировку');
+
+                const sameCount = window.selectedStones.filter(s => s.id === stoneId).length;
+                if (isWeaponOrShieldLocal) {
+                    if (sameCount >= 2) {
+                        alert('Можно установить максимум 2 одинаковых камня в оружие');
+                        return;
+                    }
+                } else if (!isConcentrationLocal) {
+                    if (sameCount >= 1) {
+                        alert('Нельзя устанавливать одинаковые камни в обычную экипировку');
+                        return;
+                    }
+                }
+
+                // === КОНЦЕНТРАЦИЯ: сначала спросим цель ===
+                if (isConcentrationLocal) {
+                    showConcentrationTargetChooser(stoneId, currentStoneLevel, (targetStat) => {
+                        window.selectedStones.push({
+                            id: stoneId,
+                            category: 'concentration',
+                            level: currentStoneLevel,
+                            targetStat
+                        });
+                        updateSelectedStonesDisplay(slotType, isTwoHandedWeapon, isWeaponOrShieldLocal);
+                        render();
+                    });
                     return;
                 }
-            }
-            
-            window.selectedStones.push({
-                id: stoneId,
-                level: currentStoneLevel,
-                name: stone.name,
-                isPercentage: isWeaponOrShield
+
+                // Обычное добавление (сила / оружие)
+                window.selectedStones.push({
+                    id: stoneId,
+                    category: isWeaponOrShieldLocal ? 'weapon' : currentStoneCategory,
+                    level: currentStoneLevel,
+                    targetStat: null
+                });
+
+                updateSelectedStonesDisplay(slotType, isTwoHandedWeapon, isWeaponOrShieldLocal);
+                render();
             });
-            
-            const counterElement = document.getElementById(`stone-${stoneId}-counter`);
-            const currentCount = parseInt(counterElement.textContent) || 0;
-            counterElement.textContent = currentCount + 1;
-            
-            this.style.borderColor = stone.color;
-            this.style.backgroundColor = `${stone.color}40`;
-            this.classList.add('selected');
-
-            updateSelectedStonesDisplay(slotType, isTwoHandedWeapon);
         });
-    });
 
-    document.getElementById('reset-stones').addEventListener('click', function() {
-        window.selectedStones = [];
-        
-        stones.forEach(stone => {
-            const counterElement = document.getElementById(`stone-${stone.id}-counter`);
-            if (counterElement) counterElement.textContent = '0';
-            
-            const stoneOption = document.querySelector(`.stone-option[data-stone="${stone.id}"]`);
-            if (stoneOption) {
-                stoneOption.style.borderColor = `${stone.color}40`;
-                stoneOption.style.backgroundColor = `${stone.color}20`;
-                stoneOption.classList.remove('selected');
-            }
+        document.getElementById('reset-stones').addEventListener('click', () => {
+            window.selectedStones = [];
+            render();
         });
-        
-        updateSelectedStonesDisplay(slotType, isTwoHandedWeapon);
-    });
 
-    document.getElementById('skip-stones').addEventListener('click', function() {
-        window.selectedStones = [];
-        applyEquipmentSelection(slotType, equipmentType);
-        window.closeModal();
-    });
-
-    document.getElementById('back-to-runes').addEventListener('click', function() {
-        openRuneSelector(slotType, equipmentType);
-    });
-
-    document.getElementById('confirm-stones').addEventListener('click', function() {
-        if (window.currentEquipmentData && window.selectedStats.length > 0) {
+        document.getElementById('skip-stones').addEventListener('click', () => {
+            window.selectedStones = [];
             applyEquipmentSelection(slotType, equipmentType);
             window.closeModal();
-        } else {
-            console.error('Не выбрана экипировка или отсутствуют данные');
-            alert('Пожалуйста, выберите тип экипировки');
-        }
-    });
+        });
 
+        document.getElementById('back-to-runes').addEventListener('click', () => {
+            openRuneSelector(slotType, equipmentType);
+        });
+
+        document.getElementById('confirm-stones').addEventListener('click', () => {
+            if (window.currentEquipmentData && window.selectedStats.length > 0) {
+                applyEquipmentSelection(slotType, equipmentType);
+                window.closeModal();
+            } else {
+                alert('Пожалуйста, выберите тип экипировки');
+            }
+        });
+
+        updateSelectedStonesDisplay(slotType, isTwoHandedWeapon, isWeaponOrShieldLocal);
+    };
+
+    render();
     window.equipmentModal.style.display = 'flex';
 }
 
-function getStoneValueDisplay(stoneId, level, isWeapon, stoneBonuses) {
-    let stoneData;
-    
-    if (isWeapon) {
-        // Для оружия используем weapon камни
-        stoneData = stoneBonuses?.weapon?.[stoneId];
-    } else {
-        // Для обычной экипировки используем regular камни
-        stoneData = stoneBonuses?.regular?.[stoneId];
-    }
-    
-    if (!stoneData || !stoneData.values) {
-        return isWeapon ? '+0%' : '+0 ед.';
-    }
-    
-    const value = stoneData.values[level - 1];
-    
-    if (stoneData.type === 'percent' || isWeapon) {
-        return `+${value}%`;
-    } else {
-        return `+${value} ед.`;
-    }
-}
+/* ---------- вспомогательные ---------- */
 
 function getStoneSubtitle(slotType, isWeapon = false, isTwoHandedWeapon = false) {
     if (EquipmentConfig.skipStonesSlots.includes(slotType)) {
         return 'Камни не доступны для этого типа экипировки';
     }
-    
     const maxStones = getMaxStones(slotType, isTwoHandedWeapon);
-    
     if (isWeapon) {
-        if (maxStones === 6) {
-            return 'Выберите уровень и тип камня для установки в двуручное оружие (максимум 6 камней, можно до 2 одинаковых, уровень влияет на % бонуса):';
-        } else if (maxStones === 3) {
-            if (slotType === 'lhand' && window.selectedLeftHandType === 'shield') {
-                return 'Выберите уровень и тип камня для установки в щит (максимум 3 камня, можно до 2 одинаковых, уровень влияет на % бонуса):';
-            } else {
-                return 'Выберите уровень и тип камня для установки в оружие (максимум 3 камня, можно до 2 одинаковых, уровень влияет на % бонуса):';
-            }
-        }
-    } else {
-        return 'Выберите уровень и тип камня для установки в экипировку (максимум 2 камня, не одинаковые, уровень влияет на значение бонуса):';
+        if (maxStones === 8) return 'Двуручное оружие: до 8 камней Потенциала (до 2 одинаковых).';
+        if (slotType === 'lhand' && window.selectedLeftHandType === 'shield')
+            return 'Щит: до 4 камней Потенциала (до 2 одинаковых).';
+        return 'Одноручное оружие: до 4 камней Потенциала (до 2 одинаковых).';
     }
+    return 'Экипировка: до 1 камня Силы или Концентрации. Камни Силы — фиксированные значения, Камни Концентрации — процент к выбранной характеристике.';
 }
 
-function updateStoneValues(level, isWeapon, stoneBonuses) {
-    const stoneElements = document.querySelectorAll('.stone-option');
-    
-    stoneElements.forEach(stoneElement => {
-        const stoneId = stoneElement.getAttribute('data-stone');
-        const valuesElement = document.getElementById(`stone-${stoneId}-values`);
-        
-        if (valuesElement) {
-            const displayValue = getStoneValueDisplay(stoneId, level, isWeapon, stoneBonuses);
-            valuesElement.textContent = displayValue;
-        }
-    });
-}
+function updateSelectedStonesDisplay(slotType, isTwoHandedWeapon, isWeapon) {
+    const list    = document.getElementById('stones-list');
+    const counter = document.getElementById('stone-counter');
+    if (!list || !counter) return;
 
-function updateSelectedStonesDisplay(slotType, isTwoHandedWeapon) {
-    const stonesList = document.getElementById('stones-list');
-    const stoneCounter = document.getElementById('stone-counter');
     const maxStones = getMaxStones(slotType, isTwoHandedWeapon);
-    
-    stoneCounter.textContent = `${window.selectedStones.length}/${maxStones}`;
-    
+    counter.textContent = `${window.selectedStones.length}/${maxStones}`;
+
+    // Обновляем счётчик на каждой карточке камня
+    document.querySelectorAll('.stone-option').forEach(option => {
+        const stoneId     = option.getAttribute('data-stone');
+        const cardCounter = option.querySelector('.stone-counter');
+        if (!cardCounter) return;
+
+        const count = window.selectedStones.filter(s => s.id === stoneId).length;
+        cardCounter.textContent = count;
+        cardCounter.classList.toggle('active', count > 0);
+    });
+
     if (window.selectedStones.length === 0) {
-        stonesList.innerHTML = 'Не выбрано';
+        list.innerHTML = 'Не выбрано';
         return;
     }
 
-    const stoneGroups = {};
-    window.selectedStones.forEach(stone => {
-        if (!stoneGroups[stone.id]) {
-            stoneGroups[stone.id] = [];
+    list.innerHTML = window.selectedStones.map(s => {
+        if (s.id === 'concentration') {
+            const targetName = ConcentrationTargetStats[s.targetStat] || '?';
+            const icon = getConcentrationStatIcon(s.targetStat);
+            return `<div class="selected-stone-item conc-item">
+                <span class="conc-item-icon">${icon}</span>
+                <span class="conc-item-text">Концентрация → <strong>${targetName}</strong></span>
+                <span class="conc-item-level">ур. ${s.level}</span>
+            </div>`;
         }
-        stoneGroups[stone.id].push(stone.level);
-    });
-
-    stonesList.innerHTML = Object.keys(stoneGroups).map(stoneId => {
-        const levels = stoneGroups[stoneId];
-        const stone = window.selectedStones.find(s => s.id === stoneId);
-        const levelCounts = {};
-        
-        levels.forEach(level => {
-            levelCounts[level] = (levelCounts[level] || 0) + 1;
-        });
-        
-        const levelText = Object.keys(levelCounts).map(level => {
-            const count = levelCounts[level];
-            return count > 1 ? `${level}×${count}` : `${level}`;
-        }).join(', ');
-        
-        return `<div class="selected-stone-item">${stone.name} (ур. ${levelText})</div>`;
+        const name = StonesData.strength.find(x => x.id === s.id)?.name ||
+                     StonesData.weapon.find(x => x.id === s.id)?.name || s.id;
+        return `<div class="selected-stone-item">${name} (ур. ${s.level})</div>`;
     }).join('');
 }
 
-// Добавляем глобальную переменную для доступа к stoneBonuses
+// совместимость
 const stoneBonusesData = stoneBonuses;

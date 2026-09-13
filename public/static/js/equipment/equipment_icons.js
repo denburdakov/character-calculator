@@ -148,22 +148,17 @@ function getShieldIconPath(className, equipmentType) {
 
 // Функция для получения пути к иконке украшения
 function getJewelryIconPath(slotType, quality, equipmentType) {
-    const qualityFolder = quality === 'orange' ? 'orange' : 'purple';
-    const slotIcon = slotType === 'neck' ? 'Neck' : 
+    const qualityFolder = 'purple'; // качество убрано
+    const slotIcon = slotType === 'neck' ? 'Neck' :
                     (slotType.startsWith('ring') ? 'Ring' : 'Trinket');
     const setType = equipmentType === '4-stat' ? 'Set_2' : 'Set_3';
-    
+
     return `/static/Ico/Classes/Jewelry/${qualityFolder}/${slotIcon}/${setType}/${slotIcon}.svg`;
 }
 
-// Функция для получения пути к иконке плаща
 function getCapeIconPath(quality, equipmentType) {
     const setType = equipmentType === '4-stat' ? 'Set_2' : 'Set_3';
-    if (quality === 'red') {
-        return `/static/Ico/Classes/Cape/red/${setType}/Cape.svg`;
-    } else {
-        return `/static/Ico/Classes/Cape/orange/${setType}/Cape.svg`;
-    }
+    return `/static/Ico/Classes/Cape/orange/${setType}/Cape.svg`;
 }
 
 // Функция для получения пути к иконке камня

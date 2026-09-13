@@ -752,9 +752,38 @@
     cursor: pointer;
 }
 
-/* На маленьких экранах тултип скрывается, описание встраивается обратно */
+/* На мобильных тултип показывается по тапу и не выходит за пределы экрана */
 @media (max-width: 640px) {
     .talent-tooltip {
-        display: none !important;
+        max-width: calc(100vw - 24px);
+        font-size: 0.8rem;
+        padding: 10px 12px;
+        border-radius: 6px;
+        /* На тач-устройствах тап не должен «проваливаться» сквозь тултип */
+        pointer-events: none;
+    }
+
+    .talent-tooltip-title {
+        font-size: 0.88rem;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+    }
+
+    .talent-tooltip-desc {
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    /* Подсказка, что карточку можно ткнуть пальцем */
+    .talent-threshold .talent-item::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        transition: background 0.15s ease;
+    }
+    .talent-threshold .talent-item:active::after {
+        background: rgba(255, 255, 255, 0.06);
     }
 }

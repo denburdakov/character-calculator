@@ -1,62 +1,6 @@
 // equipment_selectors.js
 // Функции для открытия различных селекторов
 
-function openJewelryQualitySelector(slotType, dataFile) {
-    const slotNames = {
-        'neck': 'Ожерелья',
-        'ring1': 'Кольца',
-        'ring2': 'Кольца', 
-        'trinket1': 'Амулета',
-        'trinket2': 'Амулета'
-    };
-
-    window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор качества ${slotNames[slotType] || 'бижутерии'}</h2>
-        <p class="modal-subtitle">Выберите качество бижутерии:</p>
-        <div class="jewelry-quality-grid">
-            <div class="jewelry-quality-option" data-quality="purple">
-                <h3>Фиолетовый</h3>
-                <p>Эпическое качество</p>
-                <div class="quality-color purple"></div>
-            </div>
-            <div class="jewelry-quality-option" data-quality="orange">
-                <h3>Оранжевый</h3>
-                <p>Легендарное качество</p>
-                <div class="quality-color orange"></div>
-            </div>
-        </div>
-        <div class="button-container">
-            <button id="cancel-selection" class="modal-button button-cancel">Отмена</button>
-            <button id="confirm-jewelry-quality" class="modal-button button-confirm" disabled>Далее</button>
-        </div>
-    `;
-
-    let selectedQualityOption = null;
-
-    document.querySelectorAll('.jewelry-quality-option').forEach(option => {
-        option.addEventListener('click', function() {
-            if (selectedQualityOption) {
-                selectedQualityOption.classList.remove('selected');
-            }
-
-            this.classList.add('selected');
-            selectedQualityOption = this;
-            window.selectedQuality = this.getAttribute('data-quality');
-
-            document.getElementById('confirm-jewelry-quality').disabled = false;
-        });
-    });
-
-    document.getElementById('confirm-jewelry-quality').addEventListener('click', function() {
-        if (selectedQualityOption) {
-            openEquipmentTypeSelector(slotType, dataFile);
-        }
-    });
-
-    document.getElementById('cancel-selection').addEventListener('click', window.closeModal);
-    window.equipmentModal.style.display = 'flex';
-}
-
 function openLeftHandTypeSelector(slotType) {
     const currentClass = getCurrentCharacterClass();
     
@@ -135,166 +79,15 @@ function openLeftHandTypeSelector(slotType) {
 }
 
 function openShieldSelector(slotType) {
-    const dataFile = 'Щит.xml';
-    
-    window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор щита</h2>
-        <p class="modal-subtitle">Выберите щит для левой руки:</p>
-        
-        <div class="button-container-center">
-            <div class="equipment-type-option" data-type="3-stat">
-                <h3>Эпический щит</h3>
-                <p>3 характеристики</p>
-            </div>
-            <div class="equipment-type-option" data-type="4-stat">
-                <h3>Замковый щит</h3>
-                <p>4 характеристики</p>
-            </div>
-        </div>
-        
-        <div class="button-container">
-            <button id="back-to-left-hand-type" class="modal-button button-back">← Назад</button>
-            <button id="confirm-shield-type" class="modal-button button-confirm" disabled>Далее</button>
-        </div>
-    `;
-
-    let selectedType = null;
-
-    document.querySelectorAll('.equipment-type-option').forEach(option => {
-        option.addEventListener('click', function() {
-            if (selectedType) {
-                selectedType.classList.remove('selected');
-            }
-
-            this.classList.add('selected');
-            selectedType = this;
-            window.selectedEquipmentType = this.getAttribute('data-type');
-
-            document.getElementById('confirm-shield-type').disabled = false;
-        });
-    });
-
-    document.getElementById('confirm-shield-type').addEventListener('click', function() {
-        if (selectedType) {
-            loadEquipmentDataFromXML(slotType, dataFile, window.selectedEquipmentType);
-        }
-    });
-
-    document.getElementById('back-to-left-hand-type').addEventListener('click', function() {
-        openLeftHandTypeSelector(slotType);
-    });
-
-    window.equipmentModal.style.display = 'flex';
+    window.selectedWeaponType = 'one-handed';
+    window.selectedLeftHandType = 'shield';
+    openEquipmentStatsSelector(slotType, null, null);
 }
 
 function openSecondWeaponSelector(slotType) {
-    const dataFile = 'Оружие.xml';
-    
-    window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор второго оружия</h2>
-        <p class="modal-subtitle">Выберите одноручное оружие для левой руки:</p>
-        
-        <div class="button-container-center">
-            <div class="equipment-type-option" data-type="3-stat">
-                <h3>Эпическое оружие</h3>
-                <p>3 характеристики</p>
-            </div>
-            <div class="equipment-type-option" data-type="4-stat">
-                <h3>Замковое оружие</h3>
-                <p>4 характеристики</p>
-            </div>
-        </div>
-        
-        <div class="button-container">
-            <button id="back-to-left-hand-type" class="modal-button button-back">← Назад</button>
-            <button id="confirm-weapon-type" class="modal-button button-confirm" disabled>Далее</button>
-        </div>
-    `;
-
-    let selectedType = null;
-
-    document.querySelectorAll('.equipment-type-option').forEach(option => {
-        option.addEventListener('click', function() {
-            if (selectedType) {
-                selectedType.classList.remove('selected');
-            }
-
-            this.classList.add('selected');
-            selectedType = this;
-            window.selectedEquipmentType = this.getAttribute('data-type');
-
-            document.getElementById('confirm-weapon-type').disabled = false;
-        });
-    });
-
-    document.getElementById('confirm-weapon-type').addEventListener('click', function() {
-        if (selectedType) {
-            window.selectedWeaponType = 'one-handed';
-            loadEquipmentDataFromXML(slotType, dataFile, window.selectedEquipmentType);
-        }
-    });
-
-    document.getElementById('back-to-left-hand-type').addEventListener('click', function() {
-        openLeftHandTypeSelector(slotType);
-    });
-
-    window.equipmentModal.style.display = 'flex';
-}
-
-function openQualitySelector(slotType, dataFile) {
-    window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор качества плаща</h2>
-        <p class="modal-subtitle">Выберите качество плаща:</p>
-        <div class="quality-grid">
-            <div class="quality-option" data-quality="orange">
-                <h3>Оранжевый</h3>
-                <p>Легендарное качество</p>
-                <div class="quality-color orange"></div>
-            </div>
-            <div class="quality-option" data-quality="red">
-                <h3>Красный</h3>
-                <p>Высшее качество</p>
-                <div class="quality-color red"></div>
-            </div>
-        </div>
-        <div class="button-container">
-            <button id="cancel-selection" class="modal-button button-cancel">Отмена</button>
-            <button id="confirm-quality" class="modal-button button-confirm" disabled>Далее</button>
-        </div>
-    `;
-
-    const style = document.createElement('style');
-    style.textContent = `
-        .quality-color.red {
-            background: linear-gradient(135deg, #f44336, #d32f2f);
-        }
-    `;
-    document.head.appendChild(style);
-
-    let selectedQualityOption = null;
-
-    document.querySelectorAll('.quality-option').forEach(option => {
-        option.addEventListener('click', function() {
-            if (selectedQualityOption) {
-                selectedQualityOption.classList.remove('selected');
-            }
-
-            this.classList.add('selected');
-            selectedQualityOption = this;
-            window.selectedQuality = this.getAttribute('data-quality');
-
-            document.getElementById('confirm-quality').disabled = false;
-        });
-    });
-
-    document.getElementById('confirm-quality').addEventListener('click', function() {
-        if (selectedQualityOption) {
-            openEquipmentTypeSelector(slotType, dataFile);
-        }
-    });
-
-    document.getElementById('cancel-selection').addEventListener('click', window.closeModal);
-    window.equipmentModal.style.display = 'flex';
+    window.selectedWeaponType = 'one-handed';
+    window.selectedLeftHandType = 'weapon';
+    openEquipmentStatsSelector(slotType, null, null);
 }
 
 function openWeaponTypeSelector(slotType, dataFile) {
@@ -336,7 +129,7 @@ function openWeaponTypeSelector(slotType, dataFile) {
     if (availableTypes.length === 1) {
         window.selectedWeaponType = availableTypes[0];
         setTimeout(() => {
-            openEquipmentTypeSelector(slotType, getWeaponDataFile(window.selectedWeaponType));
+            openEquipmentStatsSelector(slotType, null, null);
         }, 100);
         return;
     }
@@ -359,7 +152,7 @@ function openWeaponTypeSelector(slotType, dataFile) {
 
     document.getElementById('confirm-weapon-type').addEventListener('click', function() {
         if (selectedWeaponTypeOption) {
-            openEquipmentTypeSelector(slotType, getWeaponDataFile(window.selectedWeaponType));
+            openEquipmentStatsSelector(slotType, null, null);
         }
     });
 
@@ -369,34 +162,13 @@ function openWeaponTypeSelector(slotType, dataFile) {
 
 function openEquipmentTypeSelector(slotType, dataFile) {
     const slotNames = {
-        'chest': 'Робы',
-        'helm': 'Шлема',
-        'shoulders': 'Наплечников',
-        'pants': 'Штанов',
-        'boots': 'Сапог',
-        'hands': 'Перчаток',
-        'bracers': 'Наручей',
-        'belt': 'Пояса',
-        'cape': 'Плаща',
-        'neck': 'Ожерелья',
-        'ring1': 'Кольца',
-        'ring2': 'Кольца',
-        'trinket1': 'Амулета',
-        'trinket2': 'Амулета',
-        'rhand': 'Оружия',
-        'rlhand': 'Оружия',
-        'lhand': 'Оружия',
-        'Shield': 'Щит'
+        'chest': 'Робы', 'helm': 'Шлема', 'shoulders': 'Наплечников',
+        'pants': 'Штанов', 'boots': 'Сапог', 'hands': 'Перчаток',
+        'bracers': 'Наручей', 'belt': 'Пояса', 'cape': 'Плаща',
+        'neck': 'Ожерелья', 'ring1': 'Кольца', 'ring2': 'Кольца',
+        'trinket1': 'Амулета', 'trinket2': 'Амулета',
+        'rhand': 'Оружия', 'rlhand': 'Оружия', 'lhand': 'Оружия', 'Shield': 'Щит'
     };
-
-    let qualityInfo = '';
-    if (slotType === 'cape' && window.selectedQuality) {
-        qualityInfo = `<p class="quality-info">Качество: ${EquipmentConfig.qualityNames[window.selectedQuality]}</p>`;
-    }
-    
-    if (EquipmentConfig.jewelrySlots.includes(slotType) && window.selectedQuality) {
-        qualityInfo = `<p class="quality-info">Качество: ${EquipmentConfig.qualityNames[window.selectedQuality]}</p>`;
-    }
 
     let weaponInfo = '';
     if (slotType === 'rhand' && window.selectedWeaponType) {
@@ -405,7 +177,6 @@ function openEquipmentTypeSelector(slotType, dataFile) {
 
     window.modalContent.innerHTML = `
         <h2 class="modal-title">Выбор ${slotNames[slotType] || 'экипировки'}</h2>
-        ${qualityInfo}
         ${weaponInfo}
         <p class="modal-subtitle">Выберите тип экипировки:</p>
         <div class="button-container-center">
@@ -420,8 +191,6 @@ function openEquipmentTypeSelector(slotType, dataFile) {
         </div>
         <div class="button-container">
             <button id="cancel-selection" class="modal-button button-cancel">Отмена</button>
-            ${slotType === 'cape' ? '<button id="back-to-quality" class="modal-button button-back">← Назад</button>' : ''}
-            ${EquipmentConfig.jewelrySlots.includes(slotType) ? '<button id="back-to-jewelry-quality" class="modal-button button-back">← Назад</button>' : ''}
             ${slotType === 'rhand' ? '<button id="back-to-weapon-type" class="modal-button button-back">← Назад</button>' : ''}
             <button id="confirm-type" class="modal-button button-confirm" disabled>Далее</button>
         </div>
@@ -431,14 +200,10 @@ function openEquipmentTypeSelector(slotType, dataFile) {
 
     document.querySelectorAll('.equipment-type-option').forEach(option => {
         option.addEventListener('click', function() {
-            if (selectedType) {
-                selectedType.classList.remove('selected');
-            }
-
+            if (selectedType) selectedType.classList.remove('selected');
             this.classList.add('selected');
             selectedType = this;
             window.selectedEquipmentType = this.getAttribute('data-type');
-
             document.getElementById('confirm-type').disabled = false;
         });
     });
@@ -448,20 +213,6 @@ function openEquipmentTypeSelector(slotType, dataFile) {
             loadEquipmentDataFromXML(slotType, dataFile, window.selectedEquipmentType);
         }
     });
-
-    if (slotType === 'cape') {
-        document.getElementById('back-to-quality').addEventListener('click', function() {
-            window.selectedEquipmentType = '';
-            openQualitySelector(slotType, dataFile);
-        });
-    }
-
-    if (EquipmentConfig.jewelrySlots.includes(slotType)) {
-        document.getElementById('back-to-jewelry-quality').addEventListener('click', function() {
-            window.selectedEquipmentType = '';
-            openJewelryQualitySelector(slotType, dataFile);
-        });
-    }
 
     if (slotType === 'rhand') {
         document.getElementById('back-to-weapon-type').addEventListener('click', function() {

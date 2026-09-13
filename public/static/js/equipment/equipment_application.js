@@ -14,11 +14,11 @@ function applyEquipmentSelection(slotType, equipmentType) {
     
     const equipmentStats = convertEquipmentStatsToCalculatorFormat(window.currentEquipmentData, selectedIndex);
     
-    // ВАЖНО: Формируем объект камней для передачи
     const stonesForSlot = (window.selectedStones || []).map(stone => ({
         id: stone.id,
-        level: stone.level
-        // Не нужно передавать name и isPercentage, они не используются в калькуляторе
+        level: stone.level,
+        category: stone.category,        
+        targetStat: stone.targetStat     
     }));
 
     const equipmentData = {
@@ -27,8 +27,7 @@ function applyEquipmentSelection(slotType, equipmentType) {
         stats: equipmentStats,
         equipmentType: equipmentType,
         runeLevel: window.selectedRuneLevel || 0,
-        stones: stonesForSlot,            // <-- ПЕРЕДАЕМ МАССИВ КАМНЕЙ
-        quality: window.selectedQuality,
+        stones: stonesForSlot,           
         weaponType: window.selectedWeaponType,
         leftHandType: window.selectedLeftHandType
     };
@@ -49,7 +48,7 @@ function applyEquipmentSelection(slotType, equipmentType) {
 
     // Обновление калькулятора статистики
     if (window.statCalculator) {
-        window.statCalculator.setEquipment(slotType, equipmentData); // <-- ТЕПЕРЬ ЗДЕСЬ ЕСТЬ ДАННЫЕ О КАМНЯХ
+        window.statCalculator.setEquipment(slotType, equipmentData);
         
         // Обновляем отображение статистик
         if (typeof window.updateStatsDisplay === 'function') {
@@ -70,35 +69,28 @@ function applyEquipmentSelection(slotType, equipmentType) {
 
 function convertEquipmentStatsToCalculatorFormat(equipmentData, selectedIndex) {
     const selectedEquip = equipmentData[selectedIndex];
+
+    if (selectedEquip.parsedStats) {
+        console.log('📦 Используем готовые статы (новая система):', selectedEquip.parsedStats);
+        return { ...selectedEquip.parsedStats };
+    }
+
+    // Старая логика (на случай загрузки из localStorage старого формата)
     const stats = {};
-    
-    // Добавляем бонусные статы из XML
     if (selectedEquip.stats && Array.isArray(selectedEquip.stats)) {
         selectedEquip.stats.forEach(statString => {
-            // ИСПРАВЛЕНО: Улучшенное регулярное выражение для разных форматов
-            const match = statString.match(/^(.+?)\s*[:+]\s*(\d+)$/);
+            const match = statString.match(/^(.+?)\s*[:\+]\s*(\d+)/);
             if (match) {
                 const statName = match[1].trim();
                 const statValue = parseInt(match[2], 10);
-                
-                // ИСПРАВЛЕНО: Добавляем отладку
-                console.log(`📊 Парсинг стата: "${statName}" = ${statValue}`);
-                
                 const mappedStat = EquipmentConfig.statMapping[statName];
-                
                 if (mappedStat) {
                     stats[mappedStat] = (stats[mappedStat] || 0) + statValue;
-                    console.log(`✅ Маппинг: "${statName}" -> "${mappedStat}" = ${statValue}`);
-                } else {
-                    console.warn(`❌ Неизвестная характеристика: "${statName}"`);
                 }
-            } else {
-                console.warn(`❌ Не удалось распарсить строку: "${statString}"`);
             }
         });
     }
-    
-    console.log('📦 Итоговые статы из XML:', stats);
+
     return stats;
 }
 
@@ -158,26 +150,6 @@ function updateEquipmentSlotDisplay(slotType, equipmentData) {
     nameElement.style.maxWidth = '80px';
     nameElement.style.wordWrap = 'break-word';
     slotElement.appendChild(nameElement);
-
-    if (slotType === 'cape' && equipmentData.quality) {
-        const qualityBadge = document.createElement('div');
-        qualityBadge.className = `quality-badge quality-${equipmentData.quality}`;
-        qualityBadge.textContent = equipmentData.quality === 'orange' ? 'О' : 'К';
-        qualityBadge.style.position = 'absolute';
-        qualityBadge.style.top = '5px';
-        qualityBadge.style.right = '5px';
-        qualityBadge.style.background = equipmentData.quality === 'orange' ? 'var(--warning)' : 'var(--accent)';
-        qualityBadge.style.color = 'white';
-        qualityBadge.style.borderRadius = '50%';
-        qualityBadge.style.width = '16px';
-        qualityBadge.style.height = '16px';
-        qualityBadge.style.fontSize = '10px';
-        qualityBadge.style.display = 'flex';
-        qualityBadge.style.alignItems = 'center';
-        qualityBadge.style.justifyContent = 'center';
-        qualityBadge.style.fontWeight = 'bold';
-        slotElement.appendChild(qualityBadge);
-    }
 
     if (slotType === 'rhand' && equipmentData.weaponType) {
         const weaponTypeBadge = document.createElement('div');

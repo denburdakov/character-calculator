@@ -402,40 +402,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Новая функция для получения множителя бонуса рун
     function getRuneBonusMultiplier(slotType, runeLevel) {
-        const runeBonuses = {
-            1: { equipment: 0.105, jewelry: 0.10, weapon: 0.105 },
-            2: { equipment: 0.21, jewelry: 0.25, weapon: 0.21 },
-            3: { equipment: 0.315, jewelry: 0.40, weapon: 0.315 },
-            4: { equipment: 0.42, jewelry: 0.55, weapon: 0.42 },
-            5: { equipment: 0.525, jewelry: 0.70, weapon: 0.525 },
-            6: { equipment: 0.63, jewelry: 0.85, weapon: 0.63 },
-            7: { equipment: 0.735, jewelry: 1.00, weapon: 0.735 },
-            8: { equipment: 0.84, jewelry: 1.15, weapon: 0.84 },
-            9: { equipment: 0.88, jewelry: 1.20, weapon: 0.88 },
-            10: { equipment: 0.92, jewelry: 1.25, weapon: 0.92 },
-            11: { equipment: 0.96, jewelry: 1.30, weapon: 0.96 },
-            12: { equipment: 1.00, jewelry: 1.35, weapon: 1.00 }
-        };
+        if (!window.runeCalculator) return 0;
 
-        if (!runeBonuses[runeLevel]) return 0;
-
-        const equipmentSlots = ['chest', 'helm', 'shoulders', 'pants', 'boots', 'hands', 'bracers', 'belt', 'cape'];
-        const jewelrySlots = ['neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
-        const weaponSlots = ['rhand', 'lhand'];
-
+        // Для щита используем тот же множитель, что и для оружия
+        let effectiveSlot = slotType;
         if (slotType === 'lhand' && window.equipmentData?.lhand?.leftHandType === 'shield') {
-            return runeBonuses[runeLevel].weapon;
+            effectiveSlot = 'rhand';
         }
-        
-        if (equipmentSlots.includes(slotType)) {
-            return runeBonuses[runeLevel].equipment;
-        } else if (jewelrySlots.includes(slotType)) {
-            return runeBonuses[runeLevel].jewelry;
-        } else if (weaponSlots.includes(slotType)) {
-            return runeBonuses[runeLevel].weapon;
-        }
-        
-        return 0;
+        return window.runeCalculator.getRuneMultiplier(effectiveSlot, runeLevel);
     }
 
     // Функция обновления позиции подсказки

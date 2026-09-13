@@ -43,20 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
         window.currentSlot = slotType;
         window.currentSlotElement = slotElement;
         window.currentClass = getCurrentCharacterClass();
-        
+
         const dataFile = EquipmentConfig.dataFiles[slotType];
-        
+
         if (dataFile) {
-            if (slotType === 'cape') {
-                openQualitySelector(slotType, dataFile);
-            } 
-            else if (EquipmentConfig.jewelrySlots.includes(slotType)) {
-                openJewelryQualitySelector(slotType, dataFile);
-            }
-            else if (slotType === 'rhand') {
+            if (slotType === 'rhand') {
                 openWeaponTypeSelector(slotType, dataFile);
             } else {
-                openEquipmentTypeSelector(slotType, dataFile);
+                // Плащ, бижутерия, обычная экипировка — сразу к выбору характеристик
+                openEquipmentStatsSelector(slotType, null, null);
             }
         } else {
             openBasicEquipmentSelector(slotType);

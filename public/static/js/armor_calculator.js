@@ -10,7 +10,12 @@ class ArmorCalculator {
                 'hands': { armour: 4778, spell_armour: 1866 },
                 'bracers': { armour: 2389, spell_armour: 933 },
                 'belt': { armour: 2389, spell_armour: 933 },
-                'shield': { block: 3056 }
+                'shield': { block: 3056 },
+                'ring1': { armour: 1268, spell_armour: 1268 },
+                'ring2': { armour: 1268, spell_armour: 1268 },
+                'trinket1': { armour: 1268, spell_armour: 1268 },
+                'trinket2': { armour: 1268, spell_armour: 1268 },
+                'neck': { armour: 1268, spell_armour: 1268 }
             },
             'mage': {
                 'helm': { armour: 1866, spell_armour: 4778 },
@@ -20,7 +25,12 @@ class ArmorCalculator {
                 'boots': { armour: 1866, spell_armour: 4778 },
                 'hands': { armour: 1866, spell_armour: 4778 },
                 'bracers': { armour: 933, spell_armour: 2389 },
-                'belt': { armour: 933, spell_armour: 2389 }
+                'belt': { armour: 933, spell_armour: 2389 },
+                'ring1': { armour: 1268, spell_armour: 1268 },
+                'ring2': { armour: 1268, spell_armour: 1268 },
+                'trinket1': { armour: 1268, spell_armour: 1268 },
+                'trinket2': { armour: 1268, spell_armour: 1268 },
+                'neck': { armour: 1268, spell_armour: 1268 }
             },
             'archer': {
                 'helm': { armour: 2986, spell_armour: 2986 },
@@ -30,7 +40,12 @@ class ArmorCalculator {
                 'boots': { armour: 2986, spell_armour: 2986 },
                 'hands': { armour: 2986, spell_armour: 2986 },
                 'bracers': { armour: 1493, spell_armour: 1493 },
-                'belt': { armour: 1493, spell_armour: 1493 }
+                'belt': { armour: 1493, spell_armour: 1493 },
+                'ring1': { armour: 1268, spell_armour: 1268 },
+                'ring2': { armour: 1268, spell_armour: 1268 },
+                'trinket1': { armour: 1268, spell_armour: 1268 },
+                'trinket2': { armour: 1268, spell_armour: 1268 },
+                'neck': { armour: 1268, spell_armour: 1268 }
             },
             'priest': {
                 'helm': { armour: 3732, spell_armour: 2380 },
@@ -41,7 +56,12 @@ class ArmorCalculator {
                 'hands': { armour: 3732, spell_armour: 2380 },
                 'bracers': { armour: 1866, spell_armour: 1190 },
                 'belt': { armour: 1866, spell_armour: 1190 },
-                'shield': { block: 3056 }
+                'shield': { block: 3056 },
+                'ring1': { armour: 1268, spell_armour: 1268 },
+                'ring2': { armour: 1268, spell_armour: 1268 },
+                'trinket1': { armour: 1268, spell_armour: 1268 },
+                'trinket2': { armour: 1268, spell_armour: 1268 },
+                'neck': { armour: 1268, spell_armour: 1268 }
             },
             'rogue': {
                 'helm': { armour: 2986, spell_armour: 2986 },
@@ -51,7 +71,12 @@ class ArmorCalculator {
                 'boots': { armour: 2986, spell_armour: 2986 },
                 'hands': { armour: 2986, spell_armour: 2986 },
                 'bracers': { armour: 1493, spell_armour: 1493 },
-                'belt': { armour: 1493, spell_armour: 1493 }
+                'belt': { armour: 1493, spell_armour: 1493 },
+                'ring1': { armour: 1268, spell_armour: 1268 },
+                'ring2': { armour: 1268, spell_armour: 1268 },
+                'trinket1': { armour: 1268, spell_armour: 1268 },
+                'trinket2': { armour: 1268, spell_armour: 1268 },
+                'neck': { armour: 1268, spell_armour: 1268 }
             }
         };
 

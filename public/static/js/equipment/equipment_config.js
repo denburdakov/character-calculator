@@ -168,81 +168,95 @@ const EquipmentConfig = {
     weaponSlots: ['rhand', 'lhand', 'rlhand']
 };
 
-// Камни для экипировки
+// ============ Описание камней ============
+
+// Камни Силы (абсолютные) — на всю экипировку кроме оружия
 const StonesData = {
-    regular: [
-        { id: 'hp', name: 'Здоровье', color: '#ff6b6b' },
-        { id: 'mp', name: 'Энергия', color: '#4ecdc4' },
-        { id: 'attack_power', name: 'Сила атаки', color: '#45b7d1' },
-        { id: 'attack_speed', name: 'Скорость атаки', color: '#96ceb4' },
-        { id: 'hit', name: 'Точность', color: '#feca57' },
-        { id: 'dodge', name: 'Уклонение', color: '#ff9ff3' },
-        { id: 'parry', name: 'Парирование', color: '#54a0ff' },
-        { id: 'resist', name: 'Сопр. магии', color: '#5f27cd' },
-        { id: 'crit', name: 'Шанс крит. урона', color: '#00d2d3' },
-        { id: 'armour', name: 'Физ. броня', color: '#ff9f43' },
-        { id: 'spell_armour', name: 'Маг. Броня', color: '#ee5253' },
-        { id: 'block', name: 'Блок', color: '#a29bfe' },
-        { id: 'hp_reg', name: 'Восст. Здоровья', color: '#fd79a8' },
-        { id: 'mp_reg', name: 'Восст. Энергии', color: '#81ecec' },
-        { id: 'crit_damage_resistance', name: 'Сопр. Крит', color: '#049c76ff' }
+    // Камни Силы (absolute) — идут на экипировку
+    strength: [
+        { id: 'hp',                     name: 'Здоровье',                  color: '#ff6b6b' },
+        { id: 'mp',                     name: 'Энергия',                   color: '#4ecdc4' },
+        { id: 'hp_reg',                 name: 'Восст. Здоровья',           color: '#fd79a8' },
+        { id: 'mp_reg',                 name: 'Восст. Энергии',            color: '#81ecec' },
+        { id: 'attack_power',           name: 'Сила атаки',                color: '#45b7d1' },
+        { id: 'armour',                 name: 'Физ. броня',                color: '#ff9f43' },
+        { id: 'spell_armour',           name: 'Маг. Броня',                color: '#ee5253' },
+        { id: 'hit',                    name: 'Точность',                  color: '#feca57' },
+        { id: 'crit',                   name: 'Крит. Урон',                color: '#00d2d3' },
+        { id: 'attack_speed',           name: 'Скорость атаки',            color: '#96ceb4' },
+        { id: 'dodge',                  name: 'Уклонение',                 color: '#ff9ff3' },
+        { id: 'parry',                  name: 'Парирование',               color: '#54a0ff' },
+        { id: 'resist',                 name: 'Сопр. магии',               color: '#5f27cd' },
+        { id: 'block',                  name: 'Блок',                      color: '#a29bfe' },
+        { id: 'crit_damage_resistance', name: 'Сопр. Крит',                color: '#049c76' }
     ],
-    
+
+    // Камни Концентрации (процент) — идут на экипировку
+    // При выборе камня пользователь указывает, на какую характеристику он влияет
+    concentration: [
+        { id: 'concentration', name: 'Концентрация (+%)', color: '#9b59b6' }
+    ],
+
+    // Оружейные камни (процент) — только для оружия/щита
     weapon: [
-        { id: 'hp_percent', name: 'Здоровье %', color: '#ff6b6b' },
-        { id: 'mp_percent', name: 'Энергия %', color: '#4ecdc4' },
-        { id: 'attack_power_percent', name: 'Сила атаки %', color: '#45b7d1' },
-        { id: 'attack_speed_percent', name: 'Скорость атаки %', color: '#96ceb4' },
-        { id: 'hit_percent', name: 'Точность %', color: '#feca57' },
-        { id: 'dodge_percent', name: 'Уклонение %', color: '#ff9ff3' },
-        { id: 'parry_percent', name: 'Парирование %', color: '#54a0ff' },
-        { id: 'resist_percent', name: 'Сопр. магии %', color: '#5f27cd' },
-        { id: 'crit_percent', name: 'Шанс крит. урона %', color: '#00d2d3' },
-        { id: 'armour_percent', name: 'Физ. броня %', color: '#ff9f43' },
-        { id: 'spell_armour_percent', name: 'Маг. Броня %', color: '#ee5253' },
-        { id: 'block_percent', name: 'Блок %', color: '#a29bfe' },
-        { id: 'hp_reg_percent', name: 'Восст. Здоровья %', color: '#fd79a8' },
-        { id: 'mp_reg_percent', name: 'Восст. Энергии %', color: '#81ecec' },
-        { id: 'crit_damage_resistance_percent', name: 'Сопр. Крит %', color: '#049c76ff' }
+        { id: 'hp_percent',                     name: 'Здоровье %',         color: '#ff6b6b' },
+        { id: 'mp_percent',                     name: 'Энергия %',          color: '#4ecdc4' },
+        { id: 'attack_power_percent',           name: 'Сила атаки %',       color: '#45b7d1' },
+        { id: 'attack_speed_percent',           name: 'Скорость атаки %',   color: '#96ceb4' },
+        { id: 'hit_percent',                    name: 'Точность %',         color: '#feca57' },
+        { id: 'dodge_percent',                  name: 'Уклонение %',        color: '#ff9ff3' },
+        { id: 'parry_percent',                  name: 'Парирование %',      color: '#54a0ff' },
+        { id: 'resist_percent',                 name: 'Сопр. магии %',      color: '#5f27cd' },
+        { id: 'crit_percent',                   name: 'Крит. Урон %',       color: '#00d2d3' },
+        { id: 'armour_percent',                 name: 'Физ. броня %',       color: '#ff9f43' },
+        { id: 'spell_armour_percent',           name: 'Маг. Броня %',       color: '#ee5253' },
+        { id: 'block_percent',                  name: 'Блок %',             color: '#a29bfe' },
+        { id: 'hp_reg_percent',                 name: 'Восст. Здоровья %',  color: '#fd79a8' },
+        { id: 'mp_reg_percent',                 name: 'Восст. Энергии %',   color: '#81ecec' },
+        { id: 'crit_damage_resistance_percent', name: 'Сопр. Крит %',       color: '#049c76' }
     ]
 };
 
+// Значения камней (синхронизировано со stone_calculator.js)
 const stoneBonuses = {
-    regular: {
-        // Обычные камни (абсолютные значения)
-        'hp': { values: [580, 812, 1159, 1623, 2319], type: 'absolute' },
-        'mp': { values: [348, 487, 696, 974, 1391], type: 'absolute' },
-        'attack_power': { values: [104, 146, 209, 292, 417], type: 'absolute' },
-        'attack_speed': { values: [116, 162, 232, 325, 464], type: 'absolute' },
-        'hit': { values: [116, 162, 232, 325, 464], type: 'absolute' },
-        'dodge': { values: [301, 422, 603, 844, 1206], type: 'absolute' },
-        'parry': { values: [301, 422, 603, 844, 1206], type: 'absolute' },
-        'resist': { values: [301, 422, 603, 844, 1206], type: 'absolute' },
-        'crit': { values: [116, 162, 232, 325, 464], type: 'absolute' },
-        'armour': { values: [1246, 1745, 2493, 3490, 4985], type: 'absolute' },
-        'spell_armour': { values: [1246, 1745, 2493, 3490, 4985], type: 'absolute' },
-        'block': { values: [116, 162, 232, 325, 464], type: 'absolute' },
-        'hp_reg': { values: [133, 187, 267, 373, 533], type: 'absolute' },
-        'mp_reg': { values: [47, 65, 93, 131, 187], type: 'absolute' },
-        'crit_damage_resistance': { values: [116, 162, 232, 325, 464], type: 'absolute' },
+    strength: {
+        'hp':                     { values: [232, 310, 425, 580, 775, 1005, 1275, 1585, 1935, 2320], type: 'absolute' },
+        'mp':                     { values: [140, 185, 255, 350, 465, 605, 765, 950, 1160, 1392],     type: 'absolute' },
+        'hp_reg':                 { values: [54, 70, 95, 130, 175, 230, 295, 370, 450, 534],         type: 'absolute' },
+        'mp_reg':                 { values: [18, 24, 34, 46, 62, 81, 103, 128, 157, 188],             type: 'absolute' },
+        'attack_power':           { values: [42, 55, 75, 105, 140, 180, 230, 285, 350, 418],          type: 'absolute' },
+        'armour':                 { values: [498, 665, 915, 1245, 1660, 2160, 2740, 3405, 4155, 4986], type: 'absolute' },
+        'spell_armour':           { values: [498, 665, 915, 1245, 1660, 2160, 2740, 3405, 4155, 4986], type: 'absolute' },
+        'hit':                    { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],          type: 'absolute' },
+        'crit':                   { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],          type: 'absolute' },
+        'attack_speed':           { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],          type: 'absolute' },
+        'crit_damage_resistance': { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],          type: 'absolute' },
+        'dodge':                  { values: [120, 160, 220, 300, 400, 520, 665, 825, 1005, 1206],     type: 'absolute' },
+        'parry':                  { values: [120, 160, 220, 300, 400, 520, 665, 825, 1005, 1206],     type: 'absolute' },
+        'resist':                 { values: [120, 160, 220, 300, 400, 520, 665, 825, 1005, 1206],     type: 'absolute' },
+        'block':                  { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],          type: 'absolute' }
     },
 
-    weapon: {   
-        // Оружейные камни
-        'hp_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'mp_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'attack_power_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'attack_speed_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'hit_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'dodge_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'parry_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'resist_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'crit_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'armour_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'spell_armour_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'block_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'hp_reg_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
-        'mp_reg_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+    concentration: {
+        // У камня один общий процент; конкретная характеристика задаётся пользователем
+        'concentration': { values: [0.50, 0.67, 0.92, 1.25, 1.67, 2.17, 2.75, 3.42, 4.17, 5.00], type: 'concentration' }
+    },
+
+    weapon: {
+        'hp_percent':                     { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'mp_percent':                     { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'attack_power_percent':           { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'attack_speed_percent':           { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'hit_percent':                    { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'dodge_percent':                  { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'parry_percent':                  { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'resist_percent':                 { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'crit_percent':                   { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'armour_percent':                 { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'spell_armour_percent':           { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'block_percent':                  { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'hp_reg_percent':                 { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
+        'mp_reg_percent':                 { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' },
         'crit_damage_resistance_percent': { values: [1.75, 2.45, 3.5, 4.9, 7.0], type: 'percent' }
     }
 };

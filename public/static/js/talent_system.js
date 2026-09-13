@@ -862,28 +862,92 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(tooltip);
         }
 
+        // Определяем тач-устройство
+        const isTouch = window.matchMedia('(pointer: coarse)').matches ||
+                        ('ontouchstart' in window);
+
+        const showTooltip = (item, e) => {
+            const name = item.getAttribute('data-talent-name');
+            const desc = item.getAttribute('data-talent-desc');
+            if (!name) return;
+
+            tooltip.innerHTML = `
+                <div class="talent-tooltip-title">${name}</div>
+                <div class="talent-tooltip-desc">${desc || 'Описание отсутствует'}</div>
+            `;
+            tooltip.classList.add('visible');
+
+            if (isTouch) {
+                positionTalentTooltipMobile(item);
+            } else if (e) {
+                positionTalentTooltip(e);
+            }
+        };
+
+        const hideTooltip = () => {
+            tooltip.classList.remove('visible');
+            tooltip.dataset.activeId = '';
+        };
+
         document.querySelectorAll('.talent-item').forEach(item => {
-            // Убираем старые обработчики через клонирование (на случай повторного вызова)
-            item.onmouseenter = function(e) {
-                const name = this.getAttribute('data-talent-name');
-                const desc = this.getAttribute('data-talent-desc');
-
-                if (!name) return;
-
-                tooltip.innerHTML = `
-                    <div class="talent-tooltip-title">${name}</div>
-                    <div class="talent-tooltip-desc">${desc || 'Описание отсутствует'}</div>
-                `;
-                tooltip.classList.add('visible');
+            // ---------- ПК: наведение мыши ----------
+            item.onmouseenter = function (e) {
+                if (isTouch) return;
+                showTooltip(this, e);
+            };
+            item.onmousemove = function (e) {
+                if (isTouch) return;
                 positionTalentTooltip(e);
             };
-
-            item.onmousemove = positionTalentTooltip;
-
-            item.onmouseleave = function() {
-                tooltip.classList.remove('visible');
+            item.onmouseleave = function () {
+                if (isTouch) return;
+                hideTooltip();
             };
+
+            // ---------- Мобильные: тап по карточке ----------
+            if (isTouch) {
+                item.addEventListener('click', function (e) {
+                    // Не перехватываем клики по кнопкам выбора/снятия
+                    if (e.target.closest('button')) return;
+                    e.stopPropagation();
+
+                    const id = item.getAttribute('data-talent-id');
+                    const isSameOpen =
+                        tooltip.dataset.activeId === id &&
+                        tooltip.classList.contains('visible');
+
+                    if (isSameOpen) {
+                        hideTooltip();
+                    } else {
+                        tooltip.dataset.activeId = id;
+                        showTooltip(item);
+                    }
+                });
+            }
         });
+
+        // ---------- Скрытие тултипа при тапе вне карточки и при скролле ----------
+        if (isTouch && !window.__talentOutsideClickBound) {
+            window.__talentOutsideClickBound = true;
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.talent-item')) {
+                    const t = document.getElementById('talent-tooltip');
+                    if (t) {
+                        t.classList.remove('visible');
+                        t.dataset.activeId = '';
+                    }
+                }
+            });
+
+            window.addEventListener('scroll', function () {
+                const t = document.getElementById('talent-tooltip');
+                if (t) {
+                    t.classList.remove('visible');
+                    t.dataset.activeId = '';
+                }
+            }, { passive: true });
+        }
     }
 
     function positionTalentTooltip(e) {
@@ -911,6 +975,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tooltip.style.left = x + 'px';
         tooltip.style.top = y + 'px';
+    }
+
+    // Позиционирование тултипа на мобильных:
+    // центрируем по горизонтали относительно карточки,
+    // по вертикали — над или под карточкой, в зависимости от свободного места.
+    function positionTalentTooltipMobile(item) {
+        const tooltip = document.getElementById('talent-tooltip');
+        if (!tooltip) return;
+
+        const itemRect = item.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const margin = 10;
+
+        // По вертикали: пробуем разместить под карточкой, иначе над, иначе по центру
+        const spaceBelow = vh - itemRect.bottom;
+        const spaceAbove = itemRect.top;
+
+        let top;
+        if (spaceBelow >= tooltipRect.height + margin) {
+            top = itemRect.bottom + margin;
+        } else if (spaceAbove >= tooltipRect.height + margin) {
+            top = itemRect.top - tooltipRect.height - margin;
+        } else {
+            top = Math.max(margin, (vh - tooltipRect.height) / 2);
+        }
+
+        // По горизонтали: центрируем относительно карточки, но не выходим за экран
+        let left = itemRect.left + (itemRect.width - tooltipRect.width) / 2;
+        left = Math.max(margin, Math.min(left, vw - tooltipRect.width - margin));
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
     }
 
     // ============================================================

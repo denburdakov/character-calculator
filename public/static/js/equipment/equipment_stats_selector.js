@@ -1,247 +1,461 @@
 // equipment_stats_selector.js
-// Функции для выбора характеристик экипировки
+// Новая система: пользователь сам выбирает от 1 до 6 характеристик
 
-function openEquipmentStatsSelector(slotType, equipmentData, equipmentType) {
-    const slotNames = {
-        'chest': 'Робы',
-        'helm': 'Шлема',
-        'shoulders': 'Наплечников',
-        'pants': 'Штанов',
-        'boots': 'Сапог',
-        'hands': 'Перчаток',
-        'bracers': 'Наручей',
-        'belt': 'Пояса',
-        'cape': 'Плаща',
-        'neck': 'Ожерелья',
-        'ring1': 'Кольца',
-        'ring2': 'Кольца',
-        'trinket1': 'Амулета',
-        'trinket2': 'Амулета',
-        'rhand': 'Оружия',
-        'rlhand': 'Оружия',
-        'lhand': 'Щита'
+// Все доступные характеристики с иконками и категориями
+const AllAvailableStats = {
+    'attack_power':           { name: 'Сила атаки',       icon: '⚔️', category: 'offensive' },
+    'attack_speed':           { name: 'Скорость атаки',   icon: '💨', category: 'offensive' },
+    'hit':                    { name: 'Точность',         icon: '🎯', category: 'offensive' },
+    'crit':                   { name: 'Крит. Урон',       icon: '💥', category: 'offensive' },
+    'parry':                  { name: 'Парирование',      icon: '🛡️', category: 'defensive' },
+    'dodge':                  { name: 'Уклонение',        icon: '🌀', category: 'defensive' },
+    'resist':                 { name: 'Сопр. Магии',      icon: '✨', category: 'defensive' },
+    'block':                  { name: 'Блок',             icon: '🔰', category: 'defensive' },
+    'spell_armour':           { name: 'Маг. Броня',       icon: '🔮', category: 'defensive' },
+    'armour':                 { name: 'Броня',            icon: '🪨', category: 'defensive' },
+    'mp_reg':                 { name: 'Восст. Энергии',   icon: '💧', category: 'resource'  },
+    'hp_reg':                 { name: 'Восст. Здоровья',  icon: '💖', category: 'resource'  },
+    'mp':                     { name: 'Энергия',          icon: '💠', category: 'resource'  },
+    'hp':                     { name: 'Здоровье',         icon: '❤️', category: 'resource'  },
+    'crit_damage_resistance': { name: 'Сопр. Крит',       icon: '🚫', category: 'defensive' }
+};
+
+const MAX_STATS = 6;
+
+// Кэш средних значений по слотам
+window.slotAverageStatsCache = {};
+
+/* ============================================================
+   ЗАГРУЗКА СРЕДНИХ ИЗ XML (3-stats + 4-stats вместе)
+   ============================================================ */
+async function loadSlotAverageStats(slotType, dataFile) {
+    const cacheKey = slotType;
+    if (window.slotAverageStatsCache[cacheKey]) {
+        return window.slotAverageStatsCache[cacheKey];
+    }
+
+    const allStatValues = {};
+    const currentClass  = getCurrentCharacterClass();
+    const paths         = [];
+    const folders       = ['3-stats', '4-stats'];
+
+    for (const folder of folders) {
+        if (slotType === 'cape') {
+            paths.push(`/data/orange/${folder}/${dataFile}`);
+            paths.push(`/data/red/${folder}/${dataFile}`);
+        } else if (EquipmentConfig.jewelrySlots.includes(slotType)) {
+            paths.push(`/data/jewelry/purple/${folder}/${dataFile}`);
+            paths.push(`/data/jewelry/orange/${folder}/${dataFile}`);
+        } else {
+            paths.push(`/data/equipment/${folder}/${dataFile}`);
+        }
+    }
+
+    for (const filePath of paths) {
+        try {
+            const response = await fetch(filePath);
+            if (!response.ok) continue;
+
+            const xmlText = await response.text();
+            const parser  = new DOMParser();
+            const xmlDoc  = parser.parseFromString(xmlText, 'text/xml');
+
+            const equipmentData = extractClassesFromXML(xmlDoc, '4-stat');
+            const filteredData  = filterEquipmentByClass(equipmentData, currentClass);
+
+            filteredData.forEach(equip => {
+                equip.stats.forEach(statLine => {
+                    const match = statLine.match(/^(.+?)\s*[:\+]\s*(\d+)$/);
+                    if (!match) return;
+
+                    const statName = match[1].trim();
+                    const value    = parseInt(match[2], 10);
+                    const statKey  = EquipmentConfig.statMapping[statName];
+
+                    if (statKey && !isNaN(value)) {
+                        if (!allStatValues[statKey]) allStatValues[statKey] = [];
+                        allStatValues[statKey].push(value);
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn(`⚠️ ${filePath}:`, e);
+        }
+    }
+
+    const result = {};
+    Object.entries(allStatValues).forEach(([statKey, values]) => {
+        if (values.length === 0) return;
+        const sum     = values.reduce((a, b) => a + b, 0);
+        const average = Math.round(sum / values.length);
+        const min     = Math.round(average * 0.8); // -20%
+        const max     = Math.round(average * 1.2); // +20%
+        result[statKey] = { average, min, max, samples: values.length };
+    });
+
+    window.slotAverageStatsCache[cacheKey] = result;
+    console.log(`📊 Средние значения для ${slotType}:`, result);
+    return result;
+}
+
+/* ============================================================
+   ГЛАВНАЯ ФУНКЦИЯ — ОТКРЫТИЕ СЕЛЕКТОРА ХАРАКТЕРИСТИК
+   ============================================================ */
+async function openEquipmentStatsSelector(slotType, equipmentData, equipmentType) {
+    // Если тип не передан — рандомим 3-stat / 4-stat (влияет только на иконку предмета)
+    if (!equipmentType) {
+        equipmentType = Math.random() < 0.5 ? '3-stat' : '4-stat';
+    }
+    window.selectedEquipmentType = equipmentType;
+
+    // Определяем файл данных
+    let dataFile = EquipmentConfig.dataFiles[slotType];
+    if (slotType === 'rhand' && window.selectedWeaponType === 'two-handed') {
+        dataFile = 'Оружие2.xml';
+    }
+    if (slotType === 'lhand' && window.selectedLeftHandType === 'shield') {
+        dataFile = 'Щит.xml';
+    }
+
+    // Показываем индикатор загрузки
+    window.modalContent.innerHTML = `
+        <h2 class="modal-title">Выбор характеристик</h2>
+        <div style="text-align:center; padding: 40px;">
+            <div style="font-size: 2rem;">⏳</div>
+            <p>Загрузка средних значений из XML...</p>
+        </div>
+    `;
+    window.equipmentModal.style.display = 'flex';
+
+    // Грузим средние значения
+    const averages = await loadSlotAverageStats(slotType, dataFile);
+
+    // Генерируем карточки статов
+    const statCardsHTML = Object.entries(AllAvailableStats).map(([statKey, info]) => {
+        const avg      = averages[statKey];
+        const hasAvg   = !!avg;
+        const avgValue = hasAvg ? avg.average : '';
+        const rangeTxt = hasAvg ? `${avg.min}–${avg.max}` : '—';
+        const sample   = hasAvg ? `n=${avg.samples}` : '';
+
+        return `
+            <div class="stat-option stat-cat-${info.category}" data-stat="${statKey}">
+                <div class="stat-option-header">
+                    <span class="stat-icon">${info.icon}</span>
+                    <h3>${info.name}</h3>
+                    <span class="stat-counter" data-stat="${statKey}">0</span>
+                </div>
+                <p class="stat-average" data-stat="${statKey}">
+                    ${hasAvg
+                        ? `<span class="avg-label">Среднее из статов:</span>
+                        <span class="avg-value">${avgValue}</span>
+                        <span class="avg-range">размах: ${rangeTxt}</span>
+                        <span class="avg-samples">${sample}</span>`
+                        : `<span class="no-data">Нет данных на этом классе</span>`}
+                </p>
+                <div class="instances-container" data-stat="${statKey}"></div>
+            </div>
+        `;
+    }).join('');
+
+    const slotTitles = {
+        'chest': 'Роба', 'helm': 'Шлем', 'shoulders': 'Наплечники',
+        'pants': 'Штаны', 'boots': 'Сапоги', 'hands': 'Перчатки',
+        'bracers': 'Наручи', 'belt': 'Пояс', 'cape': 'Плащ',
+        'neck': 'Ожерелье', 'ring1': 'Кольцо', 'ring2': 'Кольцо',
+        'trinket1': 'Амулет', 'trinket2': 'Амулет',
+        'rhand': 'Оружие', 'lhand': 'Щит'
     };
 
-    let qualityInfo = '';
-    if (slotType === 'cape' && window.selectedQuality) {
-        qualityInfo = `<p class="quality-info">Качество: ${EquipmentConfig.qualityNames[window.selectedQuality]}</p>`;
-    }
-
-    let weaponInfo = '';
-    if (slotType === 'rhand' && window.selectedWeaponType) {
-        weaponInfo = `<p class="weapon-info">Тип: ${EquipmentConfig.weaponTypeNames[window.selectedWeaponType]}</p>`;
-    }
-
     window.modalContent.innerHTML = `
-        <h2 class="modal-title">Выбор ${slotNames[slotType] || 'экипировки'} (${equipmentType === '4-stat' ? '4 стата' : '3 стата'})</h2>
-        ${qualityInfo}
-        ${weaponInfo}
-        
-        <div class="search-container" style="margin: 20px 0;">
-            <input type="text" 
-                id="equipment-search" 
-                placeholder="Поиск по названию или характеристикам (например: Атаки, Сила атаки, Здоровье...)" 
-                style="width: 100%; 
-                        padding: 12px 15px; 
-                        border: 2px solid var(--border); 
-                        border-radius: 10px; 
-                        font-size: 1rem;
-                        transition: var(--transition);
-                        background: white;" />
-            <div class="search-hint">Можно искать по названию экипировки или по характеристикам</div>
+        <h2 class="modal-title">Выбор характеристик — ${slotTitles[slotType] || ''}</h2>
+        <p class="modal-subtitle">
+            Выберите от <strong>1</strong> до <strong>${MAX_STATS}</strong> характеристик.
+            Можно выбирать одну и ту же характеристику несколько раз.
+            Выбрано: <span id="selected-stats-count">0</span>/${MAX_STATS}
+        </p>
+
+        <div class="stats-grid">
+            ${statCardsHTML}
         </div>
-        
-        <p class="modal-subtitle">Выберите тип экипировки:</p>
-        <div id="equipment-stats-grid">
-            <!-- Характеристики будут загружены из XML -->
+
+        <div id="selected-stats">
+            <h4>Выбранные характеристики: <span id="stats-counter">0/${MAX_STATS}</span></h4>
+            <div id="stats-list">Не выбрано</div>
+            <button id="reset-stats" class="modal-button button-reset">Сбросить характеристики</button>
         </div>
-        <div id="search-results-info" style="text-align: center; margin: 10px 0; color: var(--gray); font-size: 0.9rem;"></div>
-        
+
         <div class="button-container">
-            <button id="back-to-type" class="modal-button button-back">← Назад</button>
-            <button id="confirm-equipment" class="modal-button button-confirm" disabled>Далее → Выбор рун</button>
+            <button id="back-button" class="modal-button button-back">← Назад</button>
+            <button id="confirm-equipment" class="modal-button button-confirm" disabled>
+                Далее → Выбор рун
+            </button>
         </div>
     `;
 
-    window.currentEquipmentDataOriginal = [...equipmentData];
-    
-    loadEquipmentStatsOptions(equipmentData);
-    setupSearchFunctionality();
-    setupEquipmentSelection(slotType, equipmentType);
+    setupStatsSelection(slotType, dataFile, equipmentType);
 
-    document.getElementById('back-to-type').addEventListener('click', function() {
-        const dataFile = EquipmentConfig.dataFiles[slotType];
-        
-        if (slotType === 'cape') {
-            openQualitySelector(slotType, dataFile);
-        } else if (slotType === 'rhand') {
+    // Кнопка "Назад"
+    document.getElementById('back-button').addEventListener('click', function() {
+        if (slotType === 'rhand' && typeof openWeaponTypeSelector === 'function') {
             openWeaponTypeSelector(slotType, dataFile);
-        } else {
-            openEquipmentTypeSelector(slotType, dataFile);
+        } else if (slotType === 'lhand' && typeof openLeftHandTypeSelector === 'function') {
+            openLeftHandTypeSelector(slotType);
+        } else if (typeof window.closeModal === 'function') {
+            window.closeModal();
         }
     });
 
     window.equipmentModal.style.display = 'flex';
 }
 
-function loadEquipmentStatsOptions(equipmentData) {
-    const statsGrid = document.getElementById('equipment-stats-grid');
-    
-    if (!statsGrid) return;
-    
-    statsGrid.innerHTML = '';
+/* ============================================================
+   ОБРАБОТЧИКИ ВЫБОРА
+   ============================================================ */
+function setupStatsSelection(slotType, dataFile, equipmentType) {
+    // Массив экземпляров: [{ uid, statKey, value }]
+    const instances = [];
+    let uidCounter = 0;
 
-    if (equipmentData.length === 0) {
-        const currentClass = getCurrentCharacterClass();
-        
-        statsGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; 
-                    text-align: center; 
-                    padding: 40px 20px; 
-                    color: var(--gray);
-                    background: var(--lighter);
-                    border-radius: 12px;">
-                <div style="font-size: 3rem; margin-bottom: 10px;">🎯</div>
-                <h4 style="margin-bottom: 10px; color: var(--dark);">Нет доступной экипировки</h4>
-                <p>Для класса <strong>${EquipmentConfig.classNames[currentClass]}</strong> нет подходящей экипировки</p>
-                <p style="font-size: 0.9rem; margin-top: 10px; color: var(--gray);">
-                    Попробуйте изменить поисковый запрос или выберите другой класс
-                </p>
-            </div>
-        `;
-        return;
-    }
+    document.querySelectorAll('.stat-option').forEach(card => {
+        const statKey = card.getAttribute('data-stat');
 
-    equipmentData.forEach((equipType, index) => {
-        const statOption = document.createElement('div');
-        statOption.className = 'stat-option';
-        statOption.setAttribute('data-index', index);
-
-        const highlightedStats = equipType.stats.map(stat => {
-            const searchTerm = document.getElementById('equipment-search')?.value.trim().toLowerCase();
-            if (searchTerm && stat.toLowerCase().includes(searchTerm)) {
-                return `<div style="background: var(--warning-light); padding: 2px 4px; border-radius: 4px; margin: 2px 0;">${stat}</div>`;
+        card.addEventListener('click', (e) => {
+            // Игнорируем клики по инпутам и кнопкам удаления
+            if (e.target.closest('.stat-value-input') ||
+                e.target.closest('.remove-instance-btn') ||
+                e.target.closest('.instance-input-row')) {
+                return;
             }
-            return `<div>${stat}</div>`;
-        }).join('');
 
-        statOption.innerHTML = `
-            <h4>${equipType.type}</h4>
-            <div class="stats-list">
-                ${highlightedStats}
-            </div>
-        `;
-
-        statsGrid.appendChild(statOption);
-    });
-}
-
-function setupSearchFunctionality() {
-    const searchInput = document.getElementById('equipment-search');
-    
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim().toLowerCase();
-        filterEquipmentOptions(searchTerm);
-    });
-}
-
-function filterEquipmentOptions(searchTerm) {
-    const resultsInfo = document.getElementById('search-results-info');
-    const currentClass = getCurrentCharacterClass();
-    
-    if (!searchTerm) {
-        const filteredByClass = filterEquipmentByClass(window.currentEquipmentDataOriginal, currentClass);
-        loadEquipmentStatsOptions(filteredByClass);
-        window.currentEquipmentData = filteredByClass;
-        
-        if (resultsInfo) {
-            const totalForClass = filteredByClass.length;
-            const totalAll = window.currentEquipmentDataOriginal.length;
-            const hiddenCount = totalAll - totalForClass;
-            
-            let infoText = `Найдено: ${totalForClass} вариантов`;
-            if (hiddenCount > 0) {
-                infoText += ` (скрыто ${hiddenCount} для вашего класса)`;
+            if (instances.length >= MAX_STATS) {
+                alert(`Можно выбрать не более ${MAX_STATS} характеристик (включая повторы)`);
+                return;
             }
-            resultsInfo.textContent = infoText;
-        }
-        return;
-    }
-    
-    const filteredBySearch = window.currentEquipmentDataOriginal.filter(equip => {
-        const nameMatch = equip.type.toLowerCase().includes(searchTerm);
-        const statsMatch = equip.stats.some(stat => 
-            stat.toLowerCase().includes(searchTerm)
-        );
-        return nameMatch || statsMatch;
-    });
-    
-    const filteredData = filterEquipmentByClass(filteredBySearch, currentClass);
-    window.currentEquipmentData = filteredData;
-    
-    loadEquipmentStatsOptions(filteredData);
-    
-    if (resultsInfo) {
-        if (filteredData.length === 0) {
-            resultsInfo.textContent = `Ничего не найдено по запросу "${searchTerm}" для вашего класса`;
-            resultsInfo.style.color = 'var(--accent)';
-        } else {
-            const totalForClass = filteredData.length;
-            const totalSearch = filteredBySearch.length;
-            const hiddenCount = totalSearch - totalForClass;
-            
-            let infoText = `Найдено: ${totalForClass} из ${totalSearch} вариантов`;
-            if (hiddenCount > 0) {
-                infoText += ` (скрыто ${hiddenCount} для вашего класса)`;
-            }
-            resultsInfo.textContent = infoText;
-            resultsInfo.style.color = 'var(--secondary)';
-        }
-    }
-    
-    document.getElementById('confirm-equipment').disabled = true;
-    window.selectedStats = [];
-}
 
-function setupEquipmentSelection(slotType, equipmentType) {
-    let selectedOption = null;
+            // Добавляем новый экземпляр
+            const avg = window.slotAverageStatsCache[slotType]?.[statKey];
+            const uid = `inst_${++uidCounter}`;
+            instances.push({
+                uid,
+                statKey,
+                value: avg ? avg.average : null
+            });
 
-    document.getElementById('equipment-stats-grid').addEventListener('click', function(event) {
-        const statOption = event.target.closest('.stat-option');
-        if (!statOption) return;
+            renderInstancesInCard(card, statKey, instances, slotType);
+            updateSelectedStatsDisplay(instances, slotType);
+            updateConfirmButton(instances);
 
-        if (selectedOption) {
-            selectedOption.classList.remove('selected');
-        }
-
-        statOption.classList.add('selected');
-        selectedOption = statOption;
-
-        const selectedIndex = parseInt(statOption.getAttribute('data-index'));
-        
-        if (window.currentEquipmentData && window.currentEquipmentData[selectedIndex]) {
-            window.selectedStats = [selectedIndex];
-            document.getElementById('confirm-equipment').disabled = false;
-        } else {
-            console.error('Неверный индекс выбранного элемента:', selectedIndex);
-            document.getElementById('confirm-equipment').disabled = true;
-        }
+            // Фокус на только что добавленный инпут
+            setTimeout(() => {
+                const newInput = card.querySelector(`.stat-value-input[data-uid="${uid}"]`);
+                if (newInput) newInput.focus();
+            }, 30);
+        });
     });
 
+    // Сброс
+    document.getElementById('reset-stats').addEventListener('click', () => {
+        instances.length = 0;
+        document.querySelectorAll('.stat-option').forEach(card => {
+            card.querySelector('.stat-counter').textContent = '0';
+            const container = card.querySelector('.instances-container');
+            if (container) container.innerHTML = '';
+        });
+        updateSelectedStatsDisplay(instances, slotType);
+        updateConfirmButton(instances);
+    });
+
+    // Подтверждение
     document.getElementById('confirm-equipment').addEventListener('click', function() {
-        if (selectedOption && window.currentEquipmentData && window.selectedStats.length > 0) {
-            const selectedIndex = window.selectedStats[0];
-            if (window.currentEquipmentData[selectedIndex]) {
-                openRuneSelector(slotType, equipmentType);
-            } else {
-                console.error('Выбран неверный индекс экипировки:', selectedIndex);
-                alert('Ошибка выбора экипировки. Пожалуйста, выберите снова.');
+        // Валидация
+        for (const inst of instances) {
+            if (!inst.value || inst.value <= 0) {
+                alert(`Введите значение для "${AllAvailableStats[inst.statKey].name}"`);
+                const input = document.querySelector(`.stat-value-input[data-uid="${inst.uid}"]`);
+                if (input) input.focus();
+                return;
             }
-        } else {
-            console.error('Не выбрана экипировка');
-            alert('Пожалуйста, выберите тип экипировки');
         }
+
+        if (instances.length === 0) {
+            alert('Выберите хотя бы одну характеристику');
+            return;
+        }
+
+        // Сборка данных
+        const averages  = window.slotAverageStatsCache[slotType] || {};
+        const slotTitle = getSlotNameForType(slotType);
+
+        // Название типа — с учётом дубликатов: "Сила атаки ×2, Здоровье"
+        const counts = {};
+        instances.forEach(inst => {
+            counts[inst.statKey] = (counts[inst.statKey] || 0) + 1;
+        });
+        const nameParts = Object.entries(counts).map(([key, count]) => {
+            const n = AllAvailableStats[key].name;
+            return count > 1 ? `${n} ×${count}` : n;
+        });
+        const typeName = `${slotTitle} (${nameParts.join(', ')})`;
+
+        // Итоговые статы — суммируем значения одинаковых характеристик
+        const parsedStats = {};
+        instances.forEach(inst => {
+            parsedStats[inst.statKey] = (parsedStats[inst.statKey] || 0) + inst.value;
+        });
+
+        // Строки для отображения (одна строка на экземпляр)
+        const statsStrings = instances.map(inst => {
+            const avg = averages[inst.statKey];
+            const rangeNote = avg ? ` (размах: ${avg.min}–${avg.max})` : '';
+            return `${AllAvailableStats[inst.statKey].name} +${inst.value}${rangeNote}`;
+        });
+
+        window.currentEquipmentData = [{
+            type: typeName,
+            stats: statsStrings,
+            statKey: Object.keys(parsedStats).join('|'),
+            classes: [getCurrentCharacterClass()],
+            parsedStats,
+            instances: instances.map(i => ({ ...i }))   // сохраняем подробности
+        }];
+
+        window.selectedStats = [0];
+
+        openRuneSelector(slotType, equipmentType);
     });
+}
+
+/* ============================================================
+   РЕНДЕР ЭКЗЕМПЛЯРОВ ВНУТРИ КАРТОЧКИ
+   ============================================================ */
+function renderInstancesInCard(card, statKey, instances, slotType) {
+    const counter   = card.querySelector('.stat-counter');
+    const container = card.querySelector('.instances-container');
+
+    const cardInstances = instances.filter(i => i.statKey === statKey);
+
+    counter.textContent = cardInstances.length;
+    card.classList.toggle('has-instances', cardInstances.length > 0);
+
+    if (cardInstances.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const avg = window.slotAverageStatsCache[slotType]?.[statKey];
+
+    container.innerHTML = cardInstances.map((inst, idx) => `
+        <div class="instance-input-row" data-uid="${inst.uid}">
+            <span class="instance-index">#${idx + 1}</span>
+            <input type="number"
+                   class="stat-value-input"
+                   data-uid="${inst.uid}"
+                   data-stat="${statKey}"
+                   placeholder="Значение"
+                   min="1"
+                   value="${inst.value ?? ''}">
+            <span class="input-unit">ед.</span>
+            <button class="remove-instance-btn" data-uid="${inst.uid}" title="Убрать">✕</button>
+        </div>
+    `).join('');
+
+    // Подписка на инпуты
+    container.querySelectorAll('.stat-value-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const uid = input.getAttribute('data-uid');
+            const inst = instances.find(i => i.uid === uid);
+            if (inst) inst.value = parseInt(input.value, 10) || 0;
+            updateSelectedStatsDisplay(instances, slotType);
+            updateConfirmButton(instances);
+        });
+        input.addEventListener('click', e => e.stopPropagation());
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+            }
+        });
+    });
+
+    // Подписка на кнопки удаления
+    container.querySelectorAll('.remove-instance-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const uid = btn.getAttribute('data-uid');
+            const idx = instances.findIndex(i => i.uid === uid);
+            if (idx > -1) instances.splice(idx, 1);
+
+            renderInstancesInCard(card, statKey, instances, slotType);
+            updateSelectedStatsDisplay(instances, slotType);
+            updateConfirmButton(instances);
+        });
+    });
+}
+
+/* ============================================================
+   ОБНОВЛЕНИЕ СПИСКА ВЫБРАННЫХ
+   ============================================================ */
+function updateSelectedStatsDisplay(instances, slotType) {
+    const counter      = document.getElementById('stats-counter');
+    const list         = document.getElementById('stats-list');
+    const countDisplay = document.getElementById('selected-stats-count');
+
+    if (counter)      counter.textContent      = `${instances.length}/${MAX_STATS}`;
+    if (countDisplay) countDisplay.textContent = instances.length;
+
+    if (instances.length === 0) {
+        list.innerHTML = 'Не выбрано';
+        return;
+    }
+
+    list.innerHTML = instances.map(inst => {
+        const info  = AllAvailableStats[inst.statKey];
+        const value = inst.value ?? 0;
+        return `<div class="selected-stat-item">
+            <span class="item-icon">${info.icon}</span>
+            <span class="item-name">${info.name}</span>
+            <span class="item-value">+${value}</span>
+            <button class="remove-stat-btn" data-uid="${inst.uid}" title="Убрать">✕</button>
+        </div>`;
+    }).join('');
+
+    // Удаление из панели
+    list.querySelectorAll('.remove-stat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const uid = btn.getAttribute('data-uid');
+            const inst = instances.find(i => i.uid === uid);
+            if (!inst) return;
+
+            const idx = instances.findIndex(i => i.uid === uid);
+            if (idx > -1) instances.splice(idx, 1);
+
+            const card = document.querySelector(`.stat-option[data-stat="${inst.statKey}"]`);
+            if (card) renderInstancesInCard(card, inst.statKey, instances, slotType);
+
+            updateSelectedStatsDisplay(instances, slotType);
+            updateConfirmButton(instances);
+        });
+    });
+}
+
+function updateConfirmButton(instances) {
+    const btn = document.getElementById('confirm-equipment');
+    if (!btn) return;
+    const allValid = instances.length > 0 && instances.every(s => s.value && s.value > 0);
+    btn.disabled = !allValid;
+}
+
+function getSlotNameForType(slotType) {
+    const names = {
+        'chest': 'Роба', 'helm': 'Шлем', 'shoulders': 'Наплечники',
+        'pants': 'Штаны', 'boots': 'Сапоги', 'hands': 'Перчатки',
+        'bracers': 'Наручи', 'belt': 'Пояс', 'cape': 'Плащ',
+        'neck': 'Ожерелье', 'ring1': 'Кольцо', 'ring2': 'Кольцо',
+        'trinket1': 'Амулет', 'trinket2': 'Амулет',
+        'rhand': 'Оружие', 'lhand': 'Щит'
+    };
+    return names[slotType] || 'Экипировка';
 }

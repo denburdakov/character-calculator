@@ -84,18 +84,21 @@ function getMaxStones(slotType, isTwoHandedWeapon = false) {
     if (EquipmentConfig.skipStonesSlots.includes(slotType)) {
         return 0;
     }
-    
+
     if (slotType === 'rhand') {
-        return isTwoHandedWeapon ? 6 : 3;
-    } else if (slotType === 'lhand' && window.selectedLeftHandType === 'weapon') {
-        return 3;
-    } else if (slotType === 'lhand' && window.selectedLeftHandType === 'shield') {
-        return 3;
+        // Одноручное — 4, двуручное — 8 (камни Потенциала)
+        return isTwoHandedWeapon ? 8 : 4;
+    } else if (slotType === 'lhand' && (
+        window.selectedLeftHandType === 'weapon' ||
+        window.selectedLeftHandType === 'shield'
+    )) {
+        // Второе оружие / щит — как одноручное
+        return 4;
     } else {
-        return 2;
+        // Обычная экипировка: 1 камень Силы ИЛИ Концентрации
+        return 1;
     }
 }
-
 function canUseShield() {
     const currentClass = getCurrentCharacterClass();
     const rightHandEquipment = window.equipmentData?.rhand;

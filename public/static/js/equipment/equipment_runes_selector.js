@@ -2,11 +2,6 @@
 // Функции для выбора уровня рун
 
 function openRuneSelector(slotType, equipmentType) {
-    let qualityInfo = '';
-    if (slotType === 'cape' && window.selectedQuality) {
-        qualityInfo = `<p class="quality-info">Качество: ${EquipmentConfig.qualityNames[window.selectedQuality]}</p>`;
-    }
-
     let weaponInfo = '';
     if (slotType === 'rhand' && window.selectedWeaponType) {
         weaponInfo = `<p class="weapon-info">Тип: ${EquipmentConfig.weaponTypeNames[window.selectedWeaponType]}</p>`;
@@ -14,11 +9,10 @@ function openRuneSelector(slotType, equipmentType) {
 
     window.modalContent.innerHTML = `
         <h2 class="modal-title">Выбор уровня рун улучшения</h2>
-        ${qualityInfo}
         ${weaponInfo}
-        <p class="modal-subtitle">Выберите уровень улучшения рунами (от 1 до 12):</p>
+        <p class="modal-subtitle">Выберите уровень улучшения рунами (от 1 до 10):</p>
         <div class="runes-grid">
-            ${Array.from({length: 12}, (_, i) => i + 1).map(level => `
+            ${Array.from({length: 10}, (_, i) => i + 1).map(level => `
                 <div class="rune-level-option" data-level="${level}">
                     <h3>+${level}</h3>
                     <p>Уровень ${level}</p>
@@ -26,7 +20,7 @@ function openRuneSelector(slotType, equipmentType) {
             `).join('')}
         </div>
         <div class="button-container">
-            <button id="back-to-stats" class="modal-button button-back">← Назад</button>            
+            <button id="back-to-stats" class="modal-button button-back">← Назад</button>
             <button id="skip-runes" class="modal-button button-skip">Без рун</button>
             <button id="confirm-runes" class="modal-button button-confirm" disabled>Далее → Выбор камней</button>
         </div>
