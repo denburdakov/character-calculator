@@ -5,7 +5,6 @@ FROM alpine/git:latest AS source
 WORKDIR /src
 RUN git clone --depth 1 --branch dev \
         https://github.com/denburdakov/character-calculator.git .
-# если ветка не main — поменяйте на master или свою
 
 # ---------- Стадия 1: сборка нативных модулей ----------
 FROM node:22-bookworm-slim AS builder
@@ -15,6 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=source /src/package.json /src/package-lock.json ./
+
+# Принудительно собираем sqlite3 / better-sqlite3 из исходников,
+# чтобы они линковались с GLIBC 2.36 (Bookworm), а не с 2.38.
+ENV npm_config_build_from_source=true
+
 RUN npm ci --omit=dev && npm cache clean --force
 
 # ---------- Стадия 2: runtime ----------
