@@ -103,6 +103,22 @@ async function findUserByUsername(username) {
     });
 }
 
+async function findUserByEmail(email) {
+    if (!email) return null;
+    const database = await getDB();
+
+    return new Promise((resolve, reject) => {
+        database.get(
+            `SELECT * FROM users WHERE email = ?`,
+            [email],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            }
+        );
+    });
+}
+
 async function validateUser(username, password) {
     try {
         const user = await findUserByUsername(username);
@@ -160,6 +176,7 @@ module.exports = {
     initDatabase,
     createUser,
     findUserByUsername,
+    findUserByEmail,
     validateUser,
     saveUserData,
     getUserSaves,

@@ -22,15 +22,27 @@ router.post('/register', async (req, res) => {
         // Проверка существования пользователя
         const existingUser = await db.findUserByUsername(username);
         if (existingUser) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Имя пользователя уже занято' 
+            return res.status(400).json({
+                success: false,
+                message: 'Имя пользователя уже занято'
             });
+        }
+
+        // Проверка существования email (если он указан)
+        if (email) {
+            const existingEmail = await db.findUserByEmail(email);
+            if (existingEmail) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email уже используется'
+                });
+            }
         }
         
         // Создание пользователя
         const user = await db.createUser(username, password, email);
         console.log('Пользователь создан:', user);
+        
         
         // Автоматический вход после регистрации
         req.session.userId = user.id;
@@ -52,6 +64,45 @@ router.post('/register', async (req, res) => {
             success: false,
             message: 'Внутренняя ошибка сервера' 
         });
+    }
+});
+
+// Проверка доступности имени пользователя
+router.get('/check_username', async (req, res) => {
+    try {
+        const { username } = req.query;
+
+        if (!username || username.length < 3) {
+            return res.json({ available: false });
+        }
+
+        const existingUser = await db.findUserByUsername(username);
+        res.json({ available: !existingUser });
+    } catch (error) {
+        console.error('Ошибка проверки username:', error);
+        res.status(500).json({ available: false, error: 'Ошибка сервера' });
+    }
+});
+
+// Проверка доступности email
+router.get('/check_email', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        // Пустой email валиден — он необязателен
+        if (!email) {
+            return res.json({ available: true });
+        }
+
+        if (!email.includes('@')) {
+            return res.json({ available: false });
+        }
+
+        const existingEmail = await db.findUserByEmail(email);
+        res.json({ available: !existingEmail });
+    } catch (error) {
+        console.error('Ошибка проверки email:', error);
+        res.status(500).json({ available: false, error: 'Ошибка сервера' });
     }
 });
 
