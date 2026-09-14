@@ -70,20 +70,6 @@ app.get('/register.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// API проверки доступности имени пользователя
-app.get('/api/check_username', async (req, res) => {
-    const { username } = req.query;
-    // Временно возвращаем всегда true
-    res.json({ available: true });
-});
-
-// API проверки email
-app.get('/api/check_email', async (req, res) => {
-    const { email } = req.query;
-    // Временно возвращаем всегда true
-    res.json({ available: true });
-});
-
 // Выход
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
