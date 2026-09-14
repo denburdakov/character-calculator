@@ -23,7 +23,7 @@ const db = new Database('./database/sessions.db');
 
 app.use(session({
     name: 'sessionId',
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'Secret-SAO',
     resave: false,
     saveUninitialized: false,
     store: new SqliteStore({
@@ -51,7 +51,9 @@ app.get('/', (req, res) => {
     if (!req.session.userId) {
         return res.redirect('/login.html');
     }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), {
+        headers: { 'Cache-Control': 'no-store' }
+    });
 });
 
 app.get('/login.html', (req, res) => {
@@ -84,8 +86,23 @@ app.get('/api/check_email', async (req, res) => {
 
 // Выход
 app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login.html');
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('[logout] Ошибка уничтожения сессии:', err);
+            return res.status(500).send('Ошибка выхода');
+        }
+
+        // Сбрасываем cookie сессии в браузере
+        res.clearCookie('sessionId', {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: false // true в продакшене по HTTPS
+        });
+
+        // Только теперь редиректим
+        res.redirect('/login.html');
+    });
 });
 
 // Fallback для всех остальных путей
@@ -93,7 +110,9 @@ app.get('/{*splat}', (req, res) => {
     if (!req.session.userId) {
         return res.redirect('/login.html');
     }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), {
+        headers: { 'Cache-Control': 'no-store' }
+    });
 });
 
 // Запуск сервера
