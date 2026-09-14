@@ -6,7 +6,8 @@ const AllAvailableStats = {
     'attack_power':           { name: 'Сила атаки',       icon: '⚔️', category: 'offensive' },
     'attack_speed':           { name: 'Скорость атаки',   icon: '💨', category: 'offensive' },
     'hit':                    { name: 'Точность',         icon: '🎯', category: 'offensive' },
-    'crit':                   { name: 'Крит. Урон',       icon: '💥', category: 'offensive' },
+    'crit':                   { name: 'Шанс крит. урона', icon: '💥', category: 'offensive' },
+    'crit_damage':            { name: 'Критический урон', icon: '💢', category: 'offensive' },  // ← новый
     'parry':                  { name: 'Парирование',      icon: '🛡️', category: 'defensive' },
     'dodge':                  { name: 'Уклонение',        icon: '🌀', category: 'defensive' },
     'resist':                 { name: 'Сопр. Магии',      icon: '✨', category: 'defensive' },

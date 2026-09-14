@@ -26,7 +26,7 @@ const EquipmentIconsConfig = {
     // Маппинг слотов для иконок кнопок
     buttonIcons: {
         'helm': '01_Helm',
-        'shoulders': '02_shoulders',
+        'shoulders': '02_Shoulders',
         'chest': '04_Chest',
         'ring1': '08_Ring1',
         'trinket1': '06_Trinket1',

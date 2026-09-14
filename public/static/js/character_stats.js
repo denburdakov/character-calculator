@@ -4,7 +4,8 @@ window.characterStats = {
         "attack_power": 5621,
         "attack_speed": 0,
         "hit": 4683,
-        "crit": 4683,
+        "crit": 4683,   // шанс крита
+        "crit_damage": 0,
         "parry": 6746,
         "dodge": 5621,
         "resist": 4683,
@@ -22,7 +23,8 @@ window.characterStats = {
         "attack_power": 6746,
         "attack_speed": 0,
         "hit": 5340,
-        "crit": 7308,
+        "crit": 7308,   // шанс крита
+        "crit_damage": 0,
         "parry": 6430,
         "dodge": 7308,
         "resist": 4778,
@@ -40,7 +42,8 @@ window.characterStats = {
         "attack_power": 5115,
         "attack_speed": 0,
         "hit": 4497,
-        "crit": 5059,
+        "crit": 5059,   // шанс крита
+        "crit_damage": 0,
         "parry": 5621,
         "dodge": 5115,
         "resist": 7027,
@@ -58,7 +61,8 @@ window.characterStats = {
         "attack_power": 5906,
         "attack_speed": 0,
         "hit": 6939,
-        "crit": 7237,
+        "crit": 7237,   // шанс крита
+        "crit_damage": 0,
         "parry": 5210,
         "dodge": 7063,
         "resist": 5789,
@@ -76,7 +80,8 @@ window.characterStats = {
         "attack_power": 5902,
         "attack_speed": 0,
         "hit": 6746,
-        "crit": 5340,
+        "crit": 5340,   // шанс крита
+        "crit_damage": 0,
         "parry": 4497,
         "dodge": 4778,
         "resist": 6746,

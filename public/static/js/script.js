@@ -166,9 +166,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const statMapping = {
             'attack_power': 'attack_power',
-            'attack_speed': 'attack_speed', 
+            'attack_speed': 'attack_speed',
             'hit': 'hit',
             'crit': 'crit',
+            'crit_damage': 'crit_damage',
             'parry': 'parry',
             'dodge': 'dodge',
             'resist': 'resist',
@@ -230,13 +231,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // Обработчик для чекбокса талантов
-    const talentBuffElement = document.getElementById('talent-buff');
-    if (talentBuffElement) {
-        talentBuffElement.addEventListener('change', function() {
-            updateAllStats();
-        });
-    }
+    // // Обработчик для чекбокса талантов
+    // const talentBuffElement = document.getElementById('talent-buff');
+    // if (talentBuffElement) {
+    //     talentBuffElement.addEventListener('change', function() {
+    //         updateAllStats();
+    //     });
+    // }
 
     // Вспомогательная функция для обновления состояния левой руки
     function updateLeftHandState() {

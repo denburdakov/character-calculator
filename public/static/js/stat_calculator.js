@@ -784,6 +784,7 @@ function updateStatsDisplay(stats) {
         'attack_speed': 'attack_speed',
         'hit': 'hit',
         'crit': 'crit',
+        'crit_damage': 'crit_damage',        // ← добавить
         'parry': 'parry',
         'dodge': 'dodge',
         'resist': 'resist',

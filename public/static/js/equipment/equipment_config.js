@@ -92,6 +92,7 @@ const EquipmentConfig = {
         'Скорость атаки': 'attack_speed', 
         'Точность': 'hit',
         'Крит. Урон': 'crit',
+        'Критический урон': 'crit_damage',
         'Парирование': 'parry',
         'Уклонение': 'dodge',
         'Сопр. Магии': 'resist',
@@ -182,7 +183,8 @@ const StonesData = {
         { id: 'armour',                 name: 'Физ. броня',                color: '#ff9f43' },
         { id: 'spell_armour',           name: 'Маг. Броня',                color: '#ee5253' },
         { id: 'hit',                    name: 'Точность',                  color: '#feca57' },
-        { id: 'crit',                   name: 'Крит. Урон',                color: '#00d2d3' },
+        { id: 'crit',                   name: 'Шанс Крит. Урон',           color: '#00d2d3' },
+        { id: 'crit_damage',            name: 'Критический урон',          color: '#ff7675' },  // ← новый
         { id: 'attack_speed',           name: 'Скорость атаки',            color: '#96ceb4' },
         { id: 'dodge',                  name: 'Уклонение',                 color: '#ff9ff3' },
         { id: 'parry',                  name: 'Парирование',               color: '#54a0ff' },

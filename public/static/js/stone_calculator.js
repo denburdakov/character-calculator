@@ -20,6 +20,7 @@ class StoneCalculator {
             'resist':                 { values: [120, 160, 220, 300, 400, 520, 665, 825, 1005, 1206],  type: 'absolute' },
             'block':                  { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],       type: 'absolute' },
             'crit':                   { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],       type: 'absolute' },
+            'crit_damage':            { values: [], type: 'absolute' }, // ← новый
             'attack_speed':           { values: [46, 60, 85, 120, 165, 215, 270, 330, 395, 464],       type: 'absolute' },
 
             /* ====================================================

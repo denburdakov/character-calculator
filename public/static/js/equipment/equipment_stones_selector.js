@@ -10,7 +10,8 @@ const ConcentrationTargetStats = {
     'attack_power':           'Сила атаки',
     'attack_speed':           'Скорость атаки',
     'hit':                    'Точность',
-    'crit':                   'Крит. Урон',
+    'crit':                   'Шанс Крит. Урон',
+    'crit_damage':            'Критический урон',   // ← новый
     'dodge':                  'Уклонение',
     'parry':                  'Парирование',
     'resist':                 'Сопр. магии',
@@ -30,6 +31,7 @@ const ConcentrationStatIcons = {
     'attack_speed':           '💨',
     'hit':                    '🎯',
     'crit':                   '💥',
+    'crit_damage':            '💢',    // ← новая
     'dodge':                  '🌀',
     'parry':                  '🛡️',
     'resist':                 '✨',
