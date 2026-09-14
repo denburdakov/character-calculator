@@ -130,6 +130,9 @@
     </div>
 
     <script>
+        // Флаги доступности
+        let usernameAvailable = false;
+        let emailAvailable = true; // email необязателен — по умолчанию ок
         // ---------- Модальные окна ----------
         function showLicenseModal(e) {
             e.preventDefault();
@@ -195,48 +198,81 @@
 
             if (username.length >= 3) {
                 try {
-                    const response = await fetch(`/api/check_username?username=${encodeURIComponent(username)}`);
+                    const response = await fetch(`/api/auth/check_username?username=${encodeURIComponent(username)}`);
                     const data = await response.json();
 
                     if (data.available) {
+                        usernameAvailable = true;
                         availabilityElement.textContent = 'Имя пользователя доступно';
                         availabilityElement.className = 'available';
                     } else {
+                        usernameAvailable = false;
                         availabilityElement.textContent = 'Имя пользователя занято';
                         availabilityElement.className = 'taken';
                     }
                 } catch (error) {
                     console.error('Ошибка проверки имени:', error);
+                    usernameAvailable = false;
                 }
+            } else {
+                usernameAvailable = false;
+                availabilityElement.textContent = '';
             }
             validateForm();
         });
 
+        // Если пользователь начал править имя — сбрасываем прошлый результат
+        document.getElementById('username')?.addEventListener('input', function () {
+            usernameAvailable = false;
+            const availabilityElement = document.getElementById('username-availability');
+            if (availabilityElement) availabilityElement.textContent = '';
+            validateForm();
+        });
+
         document.getElementById('email')?.addEventListener('blur', async function () {
-            const email = this.value;
+            const email = this.value.trim();
             const availabilityElement = document.getElementById('email-availability');
 
             if (email.includes('@')) {
                 try {
-                    const response = await fetch(`/api/check_email?email=${encodeURIComponent(email)}`);
+                    const response = await fetch(`/api/auth/check_email?email=${encodeURIComponent(email)}`);
                     const data = await response.json();
 
                     if (data.available) {
+                        emailAvailable = true;
                         availabilityElement.textContent = 'Email доступен';
                         availabilityElement.className = 'available';
                     } else {
+                        emailAvailable = false;
                         availabilityElement.textContent = 'Email уже используется';
                         availabilityElement.className = 'taken';
                     }
                 } catch (error) {
                     console.error('Ошибка проверки email:', error);
+                    emailAvailable = false;
                 }
+            } else {
+                // Пустой email — валидно
+                emailAvailable = true;
+                if (availabilityElement) availabilityElement.textContent = '';
+            }
+            validateForm();
+        });
+
+        // Сброс при правке email
+        document.getElementById('email')?.addEventListener('input', function () {
+            const availabilityElement = document.getElementById('email-availability');
+            if (!this.value.trim()) {
+                emailAvailable = true; // пустое — ок
+                if (availabilityElement) availabilityElement.textContent = '';
+            } else {
+                emailAvailable = false; // ещё не проверено
             }
             validateForm();
         });
 
         function validateForm() {
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             const tosAccepted = document.getElementById('tos_accept').checked;
@@ -269,9 +305,39 @@
                 return;
             }
 
+            // Дополнительно убеждаемся, что имя/email свободны
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            try {
+                const uRes = await fetch(`/api/auth/check_username?username=${encodeURIComponent(username)}`);
+                const uData = await uRes.json();
+                if (!uData.available) {
+                    const messageEl = document.getElementById('message');
+                    messageEl.textContent = 'Имя пользователя уже занято';
+                    messageEl.className = 'alert alert-error';
+                    messageEl.style.display = 'block';
+                    return;
+                }
+
+                if (email) {
+                    const eRes = await fetch(`/api/auth/check_email?email=${encodeURIComponent(email)}`);
+                    const eData = await eRes.json();
+                    if (!eData.available) {
+                        const messageEl = document.getElementById('message');
+                        messageEl.textContent = 'Email уже используется';
+                        messageEl.className = 'alert alert-error';
+                        messageEl.style.display = 'block';
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Ошибка финальной проверки:', err);
+            }
+
             const formData = {
-                username: document.getElementById('username').value,
-                email: document.getElementById('email').value || '',
+                username,
+                email: email || '',
                 password: document.getElementById('password').value
             };
 

@@ -60,7 +60,7 @@
                             <span>Голова</span>
                         </div>
                         <div class="equipment-slot" data-slot="shoulders">
-                            <img src="/static/Ico/Button_Char/02_shoulders.svg" alt="Наплечники">
+                            <img src="/static/Ico/Button_Char/02_Shoulders.svg" alt="Наплечники">
                             <span>Плечи</span>
                         </div>
                         <div class="equipment-slot" data-slot="chest">
@@ -143,32 +143,42 @@
                     <div class="stats-tab-buttons">
                         <button class="stats-tab-btn active" data-tab="offensive">Атакующие</button>
                         <button class="stats-tab-btn" data-tab="defensive">Оборонительные</button>
+                        <button class="stats-tab-btn" data-tab="other">Прочее</button>
                     </div>
 
                     <div class="stats-tab-content">
+                        <!-- ===== АТАКУЮЩИЕ ===== -->
                         <div class="stats-tab-pane active" id="offensive-tab">
                             <div class="stats-category">
                                 <div class="stat-row"><label>Сила атаки:</label><span id="attack_power">0</span></div>
                                 <div class="stat-row"><label>Скорость атаки:</label><span id="attack_speed">0</span></div>
                                 <div class="stat-row"><label>Точность:</label><span id="hit">0</span></div>
                                 <div class="stat-row"><label>Шанс крит. урона:</label><span id="crit">0</span></div>
-                                <div class="stat-row"><label>Физическая броня:</label><span id="armour">0</span></div>
-                                <div class="stat-row"><label>Магическая броня:</label><span id="spell_armour">0</span></div>
-                                <div class="stat-row"><label>Сопр. маг:</label><span id="resist">0</span></div>
-                                <div class="stat-row"><label>Сопр. крит. урону:</label><span id="crit_damage_resistance">0</span></div>
+                                <div class="stat-row"><label>Критический урон:</label><span id="crit_damage">0</span></div>
                             </div>
                         </div>
 
+                        <!-- ===== ОБОРОНИТЕЛЬНЫЕ ===== -->
                         <div class="stats-tab-pane" id="defensive-tab">
                             <div class="stats-category">
                                 <div class="stat-row"><label>Уклонение:</label><span id="dodge">0</span></div>
-                                <div class="stat-row"><label>Блок:</label><span id="block">0</span></div>
                                 <div class="stat-row"><label>Парирование:</label><span id="parry">0</span></div>
-                                <div class="stat-row"><label>Скорость движения:</label><span id="speed">0</span></div>
+                                <div class="stat-row"><label>Сопротивление магии:</label><span id="resist">0</span></div>
+                                <div class="stat-row"><label>Блок:</label><span id="block">0</span></div>
                                 <div class="stat-row"><label>Здоровье:</label><span id="hp">0</span></div>
-                                <div class="stat-row"><label>Восстановления здоровья:</label><span id="hp_reg">0</span></div>
+                                <div class="stat-row"><label>Сопр. крит. урону:</label><span id="crit_damage_resistance">0</span></div>
+                                <div class="stat-row"><label>Физическая броня:</label><span id="armour">0</span></div>
+                                <div class="stat-row"><label>Магическая броня:</label><span id="spell_armour">0</span></div>
+                            </div>
+                        </div>
+
+                        <!-- ===== ПРОЧЕЕ ===== -->
+                        <div class="stats-tab-pane" id="other-tab">
+                            <div class="stats-category">
+                                <div class="stat-row"><label>Восст. здоровья:</label><span id="hp_reg">0</span></div>
+                                <div class="stat-row"><label>Восст. энергии:</label><span id="mp_reg">0</span></div>
                                 <div class="stat-row"><label>Энергия:</label><span id="mp">0</span></div>
-                                <div class="stat-row"><label>Восстановления энергии:</label><span id="mp_reg">0</span></div>
+                                <div class="stat-row"><label>Скорость передвижения:</label><span id="speed">0</span></div>
                             </div>
                         </div>
                     </div>
